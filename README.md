@@ -29,7 +29,7 @@ A document is decided automatically only if confidence is at or above a threshol
 
 - **Documents:** 76 public Enron emails (Hugging Face `corbt/enron-emails`), each rendered as a page and degraded by `src/scan.py` (skew, blur, noise, fax header, Bates stamp, margin note in a handwriting font, perspective). The committed scans were rendered with Courier New and Ink Free, which are not included in this repository. Re-running `src/scan.py` without them uses fallback fonts and produces different-looking scans.
 - **Requests:** three mock document requests and a privilege rule, in `data/requests.md`.
-- **Labels:** made by two model labelers, each given only the scan and the review instructions. No attorney has labeled the set yet. See Results.
+- **Labels:** made by three model labelers (Argon, Carbon and Neon), each given only the scan and the review instructions. No attorney has labeled the set yet. See Results.
 - **Order of events, checkable in the git history:** model outputs for all 76 documents (`eval/results.jsonl`) were committed before the first label was saved. The scorer and the rule for picking a new threshold were also committed before the first label. The threshold in that run was 0.9.
 - **Two runs, one scored:** the first run (12:15) used a personal API key instead of the hackathon one. We ran everything again on the hackathon key and committed that run at 12:50. No label existed yet, and we never scored the first run or compared it with the second. Only the second run is scored. The first is in the git history.
 
@@ -41,7 +41,7 @@ Of the 76 documents, 40 were found by keyword searches for terms that match the 
 
 ## Results
 
-**The labels are two models', not an attorney's.** Two models labeled all 76 scans independently: Gemini 4 Argon through the API (`src/model_label.py`) and Gemini 4 Carbon through the labeling page. Each saw only the scan and the review instructions. They agree on 72 of 76. The four differences are all privilege calls (DOC-040, DOC-051, DOC-055, DOC-072).
+**The labels are models', not an attorney's.** Two models first labeled all 76 scans independently: Gemini 4 Argon through the API (`src/model_label.py`) and Gemini 4 Carbon through the labeling page. Each saw only the scan and the review instructions. They agree on 72 of 76. The four differences are all privilege calls (DOC-040, DOC-051, DOC-055, DOC-072). A third model labeler (Gemini 4 Neon) was added below.
 
 The table uses Argon's labels, so "right" means "agrees with Argon". Carbon's labels are scored in `eval/REPORT_carbon.md` and compared below.
 
@@ -109,7 +109,7 @@ The same breakdown for each probability on its own is in `eval/CALIBRATION_argon
 - **One responsiveness miss.** DOC-058 is an automated transmission notice that the labeler tied to the California market and the system did not.
 - **A request tag got through unreviewed, and the gate does not cover it.** DOC-062 and DOC-071 (one email, two copies) were decided automatically as R1. Neon calls them R3; Argon and Carbon agree with R1. Nobody disputes that they are responsive and not privileged. But the confidence that gates automatic decisions covers only the responsive and privileged probabilities, not which request. The Decisions API gave R1 a probability of 0.67 and 0.79 on these two. In a replay, also requiring the request probability to be at least 0.8 sends both to a human and leaves 33 automatic decisions at 0.9 (43 at 0.8) with no disagreement against any labeler. We found this after the third labeler was added. The cut-off of 0.8 was chosen on these same documents and the change is not in the shipped pipeline, so treat it as the next change, not a result.
 - **It decides less than half the documents alone at 0.9** (35 of 76), and 61% at 0.8 (46 of 76).
-- **The labels are models'.** The two labelers disagree with each other on four privilege calls, which is as many as the system's own privilege disagreements. Argon marked 19 of the 76 as documents a careful reviewer could disagree on. The system sent 16 of those 19 to a human, which suggests its doubt lands in the right places, but no attorney has checked the labels.
+- **The labels are models'.** Argon and Carbon disagree with each other on four privilege calls (as many as the system's own privilege disagreements), and across all three labelers 9 of 76 documents split. Argon marked 19 of the 76 as documents a careful reviewer could disagree on. The system sent 16 of those 19 to a human, which suggests its doubt lands in the right places, but no attorney has checked the labels.
 
 Limits of the test itself:
 
