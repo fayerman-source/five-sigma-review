@@ -124,6 +124,64 @@ def main():
     for name, st in [("All documents", all_stats), ("Distinct emails only (first copy per normalised body)", distinct_stats)]:
         sn, base_ok, sys_ok, auto, auto_ok, wrong_auto = st
         lines.append(f"| {name} | {sn} | {frac(base_ok, sn)} | {frac(sys_ok, sn)} | {frac(auto_ok, auto)} | {frac(auto, sn)} | {wrong_auto} |")
+
+    synth_path = ROOT / "eval" / "labels_synthetic25.json"
+    notes25_path = ROOT / "eval" / "labels_synthetic25_notes.json"
+    if synth_path.exists():
+        L25 = json.loads(synth_path.read_text())
+        N25 = json.loads(notes25_path.read_text()) if notes25_path.exists() else {}
+        sdocs = sorted(d for d in L25 if d in maj)
+        sn = len(sdocs)
+        ag_a = sum(1 for d in sdocs if norm_call(L25[d]) == norm_call(LABELS["argon"][d]))
+        ag_c = sum(1 for d in sdocs if norm_call(L25[d]) == norm_call(LABELS["carbon"][d]))
+        ag_n = sum(1 for d in sdocs if norm_call(L25[d]) == norm_call(LABELS["neon"][d]))
+        ag_m = sum(1 for d in sdocs if norm_call(L25[d]) == maj[d])
+        s_sys = s_base = s_auto = s_auto_ok = s_wrong_auto = 0
+        diff25 = []
+        for d in sdocs:
+            g = norm_call(L25[d])
+            y, b = RESULTS[d]["system"], RESULTS[d]["baseline"]
+            oy, ob = norm_call(y) == g, norm_call(b) == g
+            s_sys += oy
+            s_base += ob
+            is_auto = y["decision"] == "auto"
+            if is_auto:
+                s_auto += 1
+                s_auto_ok += oy
+                s_wrong_auto += not oy
+            if g != maj[d] or (is_auto and not oy):
+                reason = (N25.get(d, {}).get("reason") or "").replace("|", "/")
+                diff25.append((d, g, maj[d], norm_call(y), y["decision"], reason))
+        lines += [
+            "",
+            f"## (e) Synthetic second-look check on {sn} contested-and-control scans (NOT attorney labels)",
+            "",
+            "**Disclosure: `eval/labels_synthetic25.json` was produced by a Gemini 4 model (`gemini-4-carbon`) given extra scrutiny guidance on privilege boundaries and LJM litigation holds, NOT by a human attorney.** "
+            "The 25 document IDs come from `eval/attorney_check_docs.json` (contested, disagreement, and control scans).",
+            "",
+            "| Comparison on the 25 scans | Match count |",
+            "|---|---|",
+            f"| synthetic25 vs Argon | {frac(ag_a, sn)} |",
+            f"| synthetic25 vs Carbon | {frac(ag_c, sn)} |",
+            f"| synthetic25 vs Neon | {frac(ag_n, sn)} |",
+            f"| synthetic25 vs 3-model majority | {frac(ag_m, sn)} |",
+            f"| Single-call baseline vs synthetic25 | {frac(s_base, sn)} |",
+            f"| Five Sigma (all 25) vs synthetic25 | {frac(s_sys, sn)} |",
+            f"| Five Sigma (auto-decided) vs synthetic25 | {frac(s_auto_ok, s_auto)} ({s_wrong_auto} wrong auto-decisions) |",
+            "",
+        ]
+        if diff25:
+            lines += [
+                "Documents where `synthetic25` differs from the 3-model majority or from a Five Sigma auto-decision:",
+                "",
+                "| Document | synthetic25 | 3-model majority | Five Sigma call | Routing | Synthetic note |",
+                "|---|---|---|---|---|---|",
+            ]
+            for d, g, m, yc, dec, rsn in diff25:
+                lines.append(f"| {d} | {fmt_call(g)} | {fmt_call(m)} | {fmt_call(yc)} | {dec} | {rsn} |")
+        else:
+            lines.append("`synthetic25` agrees with the 3-model majority on all 25 documents and has 0 disagreements with Five Sigma's auto-decisions.")
+
     lines.append("")
 
     out = ROOT / "eval" / "AGREEMENT.md"

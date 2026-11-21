@@ -20,11 +20,11 @@ PROMPT = ("You are an attorney doing first-pass document review. Review instruct
           'Return JSON {"responsive": true|false, "request": "R1"|"R2"|"R3"|"none", "privileged": true|false, '
           '"ambiguous": true|false, "reason": "<one sentence>"}. Set ambiguous to true if a careful reviewer could reasonably disagree.')
 
-def label(model, doc):
+def label(model, doc, prompt=PROMPT):
     mime, data = P._img_part(ROOT / "data" / "scans" / f"{doc}.jpg")
     for _ in range(3):
         try:
-            d = json.loads(P._gen(model, [{"inline_data": {"mime_type": mime, "data": data}}, {"text": PROMPT}], json_mode=True, thinking="high"))
+            d = json.loads(P._gen(model, [{"inline_data": {"mime_type": mime, "data": data}}, {"text": prompt}], json_mode=True, thinking="high"))
             resp, priv = d["responsive"], d["privileged"]
             if not isinstance(resp, bool) or not isinstance(priv, bool):
                 raise ValueError(f"non-boolean label: responsive={resp!r}, privileged={priv!r}")
@@ -37,15 +37,34 @@ def label(model, doc):
     return doc, None, {"error": err}
 
 def main():
-    model, name = sys.argv[1], sys.argv[2]
-    lo, hi = (int(sys.argv[3]), int(sys.argv[4])) if len(sys.argv) > 4 else (1, 10**6)
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("model")
+    ap.add_argument("name")
+    ap.add_argument("bounds", nargs="*", type=int)
+    ap.add_argument("--docs", help="Optional JSON file of doc IDs to label")
+    ap.add_argument("--guidance", help="Optional extra review guidance text or file path")
+    args = ap.parse_args()
+    model, name = args.model, args.name
+    lo, hi = (args.bounds[0], args.bounds[1]) if len(args.bounds) >= 2 else (1, 10**6)
+    prompt = PROMPT
+    if args.guidance:
+        gp = Path(args.guidance) if Path(args.guidance).exists() else (ROOT / args.guidance)
+        extra = gp.read_text().strip() if gp.exists() else args.guidance.strip()
+        prompt = PROMPT + "\n\n" + extra
     out, notes_path = ROOT / "eval" / f"labels_{name}.json", ROOT / "eval" / f"labels_{name}_notes.json"
     L = json.loads(out.read_text()) if out.exists() else {}
     N = json.loads(notes_path.read_text()) if notes_path.exists() else {}
-    docs = [json.loads(l)["doc_id"] for l in (ROOT / "data" / "emails.jsonl").open()]  # ids only; no other field is read
+    if args.docs:
+        dp = Path(args.docs) if Path(args.docs).exists() else (ROOT / args.docs)
+        docs = json.loads(dp.read_text())
+    else:
+        docs = [json.loads(l)["doc_id"] for l in (ROOT / "data" / "emails.jsonl").open()]  # ids only; no other field is read
     todo = [d for d in docs if lo <= int(d.split("-")[1]) <= hi and d not in L]
     with cf.ThreadPoolExecutor(6) as ex:
-        for doc, lab, note in ex.map(lambda d: label(model, d), todo):
+        futs = [ex.submit(label, model, d, prompt) for d in todo]
+        for fut in cf.as_completed(futs):
+            doc, lab, note = fut.result()
             if lab: L[doc] = lab
             N[doc] = dict(note, model=model)
             out.write_text(json.dumps(dict(sorted(L.items())), indent=1)); notes_path.write_text(json.dumps(dict(sorted(N.items())), indent=1))
