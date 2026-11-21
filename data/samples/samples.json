@@ -1,0 +1,26 @@
+[
+ {
+  "id": "hedge",
+  "file": "hedge.jpg",
+  "title": "Memo about a hedge deal",
+  "note": "Degraded fax scan",
+  "message_id": "<23010778.1075854478547.JavaMail.evans@thyme>",
+  "source": "public Enron corpus (corbt/enron-emails); not one of the 76 test documents"
+ },
+ {
+  "id": "privileged",
+  "file": "privileged.jpg",
+  "title": "Email marked privileged",
+  "note": "Degraded scan, lawyer correspondence",
+  "message_id": "<8714961.1075845058976.JavaMail.evans@thyme>",
+  "source": "public Enron corpus (corbt/enron-emails); not one of the 76 test documents"
+ },
+ {
+  "id": "california",
+  "file": "california.jpg",
+  "title": "Letter on California power prices",
+  "note": "Degraded scan",
+  "message_id": "<20367132.1075843599255.JavaMail.evans@thyme>",
+  "source": "public Enron corpus (corbt/enron-emails); not one of the 76 test documents"
+ }
+]
