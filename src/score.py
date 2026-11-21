@@ -2,10 +2,13 @@
 
 Results are given for all labeled documents and separately for the two ways documents were
 picked (keyword search vs random row), because keyword-picked documents are easier."""
-import json, math
+import json, math, os
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
-L = json.loads((ROOT / "eval" / "labels.json").read_text())
+LABELS_FILE = os.environ.get("LABELS_FILE", "labels.json")
+MODEL_LABELS = LABELS_FILE != "labels.json"  # anything but the attorney's file is a model labeler, and the report says so
+TAG = "" if not MODEL_LABELS else "_" + Path(LABELS_FILE).stem.replace("labels_", "")
+L = json.loads((ROOT / "eval" / LABELS_FILE).read_text())
 R = {json.loads(l)["doc_id"]: json.loads(l) for l in (ROOT / "eval" / "results.jsonl").open()}
 E = [json.loads(l) for l in (ROOT / "data" / "emails.jsonl").open()]
 GROUP = {e["doc_id"]: ("keyword" if e["source"].startswith("search:") else "random") for e in E}
@@ -66,15 +69,24 @@ def main():
     S = [(name, stats(docs)) for name, docs in groups]
     a = S[0][1]; n = a["n"]
     nk = sum(1 for g in GROUP.values() if g == "keyword")
-    lines = [f"# Results on {n} attorney-labeled scans", "",
+    who = "the attorney" if not MODEL_LABELS else "the reference model"
+    if MODEL_LABELS:
+        title = f"# Agreement with model-made labels on {n} scans (NOT attorney labels)"
+        how = ("**These labels were made by a model (Gemini 4 Carbon, through the labeling page, from the scan and the review "
+               "instructions only), not by a person.** So \"right\" below means \"agrees with Gemini 4 Carbon\", which is weaker than "
+               "accuracy: Carbon can be wrong, and it is from the same model family as the system under test. ")
+    else:
+        title = f"# Results on {n} attorney-labeled scans"
+        how = "The attorney labeled the scans before seeing any model output. "
+    lines = [title, "",
         "## How the test set was chosen (read this first)",
         f"The set is {len(GROUP)} public Enron emails, rendered as degraded scans. {nk} were found by keyword searches for terms "
         f"that match the mock requests ({', '.join(QUERIES)}); {len(GROUP) - nk} were taken from random positions in the corpus. "
         "Keyword-picked documents are easier for any model, because the search term that found them is usually the reason they are "
         "responsive. So every number is given three ways: all documents, random only, keyword-picked only. "
         "**The random row is the fairer estimate of real-world performance.**", "",
-        "The attorney labeled the scans before seeing any model output. Model outputs and the auto-decision threshold (0.9) were "
-        "fixed and committed before the first label was saved. \"Right\" means all three calls match the attorney: "
+        how + "Model outputs and the auto-decision threshold (0.9) were "
+        f"fixed and committed before the first label was saved. \"Right\" means all three calls match {who}: "
         "responsive or not, which request, privileged or not.", "",
         "| Documents | n | Single-call baseline right | Five Sigma right (all docs) | Five Sigma right (auto-decided only) | Decided without a human | Wrong but auto-decided |",
         "|---|---|---|---|---|---|---|"] + [row(name, s) for name, s in S] + ["",
@@ -82,7 +94,7 @@ def main():
         f"Five Sigma auto-decided {wilson(a['auto_ok'], a['auto'])}. With samples this small the intervals are wide; "
         "read differences of a few documents as noise.", ""]
     for name, s in S: lines += detail(name, s)
-    (ROOT / "eval" / "REPORT.md").write_text("\n".join(lines)); print("\n".join(lines))
+    (ROOT / "eval" / f"REPORT{TAG}.md").write_text("\n".join(lines)); print("\n".join(lines))
 
 if __name__ == "__main__":
     main()

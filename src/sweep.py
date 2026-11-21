@@ -6,10 +6,13 @@ how many documents are decided without a human and how many of those are right.
 To avoid tuning on the test set, the threshold is PICKED on DOC-001..050 and then REPORTED on
 DOC-051..076, which the choice never saw. Writes eval/THRESHOLDS.md and eval/threshold_curve.png.
 Usage: python3 src/sweep.py [--pick 0.95]   (default: pick_threshold() below)"""
-import json, sys
+import json, os, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
-L = json.loads((ROOT / "eval" / "labels.json").read_text())
+LABELS_FILE = os.environ.get("LABELS_FILE", "labels.json")
+MODEL_LABELS = LABELS_FILE != "labels.json"  # a model labeler, not the attorney; the report says so
+TAG = "" if not MODEL_LABELS else "_" + Path(LABELS_FILE).stem.replace("labels_", "")
+L = json.loads((ROOT / "eval" / LABELS_FILE).read_text())
 R = {json.loads(l)["doc_id"]: json.loads(l)["system"] for l in (ROOT / "eval" / "results.jsonl").open()}
 GROUP = {json.loads(l)["doc_id"]: ("keyword" if json.loads(l)["source"].startswith("search:") else "random")
          for l in (ROOT / "data" / "emails.jsonl").open()}
@@ -86,7 +89,11 @@ def main():
     confirm = [d for d in DOCS if int(d.split("-")[1]) > TUNE_MAX]
     picked = float(sys.argv[sys.argv.index("--pick") + 1]) if "--pick" in sys.argv else pick_threshold([at(tune, t) for t in THRESHOLDS])
     before, after = at(tune, PREREGISTERED), at(tune, picked)
-    lines = ["# What we changed after seeing failures: the auto-decision threshold", "",
+    lines = ["# What we changed after seeing failures: the auto-decision threshold", ""]
+    if MODEL_LABELS:
+        lines += ["**Scored against labels made by a model (Gemini 4 Carbon), not by the attorney. \"Right\" and \"wrong\" here mean "
+                  "agreement or disagreement with that model.**", ""]
+    lines += [
         f"The system was run once, with the threshold fixed at {PREREGISTERED} before any label existed. After scoring, we replayed the "
         "stored outputs at other thresholds (no new model calls). A document is decided without a human only if its calibrated "
         "confidence is at or above the threshold AND every supporting quote is found verbatim on the page; the last column drops "
@@ -103,13 +110,13 @@ def main():
                   f"| Confirmation documents, after ({picked}) | {pct(ca['auto'], ca['n'])} | {ca['wrong']} {ca['wrong_ids'] or ''} |"]
     else:
         lines += ["", f"No documents after DOC-{TUNE_MAX:03d} are labeled yet, so the picked threshold is NOT confirmed on unseen documents."]
-    lines += ["", "![Threshold curve](threshold_curve.png)", ""]
+    lines += ["", f"![Threshold curve](threshold_curve{TAG}.png)", ""]
     lines += table("Tuning documents", tune, mark=(picked,))
     if confirm: lines += table("Confirmation documents (never used to pick)", confirm, mark=(picked,))
     lines += table("All labeled, random documents only", [d for d in DOCS if GROUP[d] == "random"], mark=(picked,))
     lines += table("All labeled, keyword-picked documents only", [d for d in DOCS if GROUP[d] == "keyword"], mark=(picked,))
-    (ROOT / "eval" / "THRESHOLDS.md").write_text("\n".join(lines))
-    chart(DOCS, picked, ROOT / "eval" / "threshold_curve.png")
+    (ROOT / "eval" / f"THRESHOLDS{TAG}.md").write_text("\n".join(lines))
+    chart(DOCS, picked, ROOT / "eval" / f"threshold_curve{TAG}.png")
     print("\n".join(lines))
 
 if __name__ == "__main__":
