@@ -1,6 +1,6 @@
 # Five Sigma Review
 
-First-pass legal document review of scanned pages. It says when it is not sure. Built at the Gemini 4 NYC Hackathon (Nov 21, 2026), Problem Statement One.
+First-pass legal document review of scanned pages. It says when it is not sure. Built at the Gemini 4 NYC Hackathon (Nov 21, 2026), Problem Statement One. Everything in this repository was written that day; it contains no earlier code.
 
 ## The problem
 
