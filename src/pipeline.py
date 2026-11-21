@@ -17,14 +17,15 @@ READER, EVIDENCE, BASELINE = "gemini-4-hydrogen", "gemini-4-neon", "gemini-4-hyd
 THRESH = float(os.environ.get("AUTO_THRESHOLD", "0.9"))
 
 def _key():
-    """Key lookup order: GEMINI_API_KEY in the environment, then .env.hackathon, then .env (both gitignored)."""
-    k = os.environ.get("GEMINI_API_KEY")
+    """Key lookup order: .env.hackathon, then .env (both gitignored), then GEMINI_API_KEY in the environment.
+    Project files come first so a key exported in the shell profile cannot silently replace the hackathon key."""
     for name in (".env.hackathon", ".env"):
         f = ROOT / name
-        if k or not f.exists(): continue
+        if not f.exists(): continue
         for line in f.read_text().splitlines():
-            if line.startswith("GEMINI_API_KEY="): k = line.split("=", 1)[1].strip().strip('"\'')
-    return k
+            if line.startswith("GEMINI_API_KEY=") and line.split("=", 1)[1].strip():
+                return line.split("=", 1)[1].strip().strip('"\'')
+    return os.environ.get("GEMINI_API_KEY")
 
 def _post(path, body, tries=4):
     data = json.dumps(body).encode()
