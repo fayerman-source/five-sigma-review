@@ -58,8 +58,8 @@ Threshold 0.9, fixed before any label existed:
 
 What the numbers say:
 
-- **Nothing wrong got through, under either labeler.** The system decided 35 documents on its own and matched both Argon's and Carbon's labels on all 35. It disagreed with Argon on five documents and sent all five to a human.
-- **The edge over the baseline is small and depends on the labeler.** On the 61 distinct emails the system matches Argon on 58 and the baseline on 53. Against Carbon's labels it is 56 against 55. The firm result is the first one, not this one.
+- **No document it decided alone has a responsiveness or privilege call that any labeler disputes.** The system decided 35 documents on its own. Argon, Carbon and the three-labeler majority match it on all 35. Neon matches its responsiveness and privilege calls on all 35 but gives a different request tag on two: DOC-062 and DOC-071, two copies of one email about collecting files for the LJM litigation. The system tagged them R1 (LJM) and Neon tagged them R3 (document handling). The system disagreed with Argon on five documents and sent all five to a human.
+- **There is no reliable edge over the baseline in overall agreement.** On the 61 distinct emails the system matches Argon on 58 and the baseline on 53. Against Carbon it is 56 against 55. Against Neon the baseline is ahead, 56 against 53. What the system adds is the routing in the first point, not a higher score.
 - **The price is review.** It sent 41 documents to a human, and it had 36 of those right anyway.
 - **The baseline over-calls privilege.** Of its 12 disagreements, 8 are documents it called privileged and the labels did not. Privilege precision: baseline 43%, Five Sigma 71%.
 - **On random documents the system is no better than the baseline** (34 of 36 against 35 of 36). The gain is on keyword-picked documents (37 of 40 against 29 of 40), where the privileged-looking documents are.
@@ -70,7 +70,7 @@ A third model labeler, Gemini 4 Neon (`eval/labels_neon.json`), was added later 
 
 ## What we changed after seeing failures
 
-No wrong call got through at 0.9. The failure we saw was cost: more than half the documents went to a human, most of them needlessly. So we lowered the threshold, by the rule fixed in advance in `src/sweep.py`:
+Against Argon's and Carbon's labels no wrong call got through at 0.9. The failure we saw first was cost: more than half the documents went to a human, most of them needlessly. So we lowered the threshold, by the rule fixed in advance in `src/sweep.py`:
 
 1. Replay the stored outputs at other thresholds, with no new model calls.
 2. Pick the lowest threshold with no wrong auto-decision on DOC-001 to DOC-050. That threshold is 0.8.
@@ -107,6 +107,7 @@ The same breakdown for each probability on its own is in `eval/CALIBRATION_argon
 
 - **Privilege is the weak point.** Four of the five disagreements are privilege calls. In two the system missed privilege that the labeler found (DOC-010, DOC-040). In two it called privilege that the labeler did not (DOC-023, DOC-072). Its confidence on all four was between 0.51 and 0.80, so all four went to a human.
 - **One responsiveness miss.** DOC-058 is an automated transmission notice that the labeler tied to the California market and the system did not.
+- **A request tag got through unreviewed, and the gate does not cover it.** DOC-062 and DOC-071 (one email, two copies) were decided automatically as R1. Neon calls them R3; Argon and Carbon agree with R1. Nobody disputes that they are responsive and not privileged. But the confidence that gates automatic decisions covers only the responsive and privileged probabilities, not which request. The Decisions API gave R1 a probability of 0.67 and 0.79 on these two. In a replay, also requiring the request probability to be at least 0.8 sends both to a human and leaves 33 automatic decisions at 0.9 (43 at 0.8) with no disagreement against any labeler. We found this after the third labeler was added. The cut-off of 0.8 was chosen on these same documents and the change is not in the shipped pipeline, so treat it as the next change, not a result.
 - **It decides less than half the documents alone at 0.9** (35 of 76), and 61% at 0.8 (46 of 76).
 - **The labels are models'.** The two labelers disagree with each other on four privilege calls, which is as many as the system's own privilege disagreements. Argon marked 19 of the 76 as documents a careful reviewer could disagree on. The system sent 16 of those 19 to a human, which suggests its doubt lands in the right places, but no attorney has checked the labels.
 
