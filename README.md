@@ -2,15 +2,25 @@
 
 First-pass legal document review of scanned pages. It says when it is not sure. Built at the Gemini 4 NYC Hackathon (Nov 21, 2026), Problem Statement One. Everything in this repository was written that day; it contains no earlier code.
 
+**Demo video (1 minute):** https://youtu.be/JKIFOyBfBH0
+
 | ![Auto-decided review with a verified quote](assets/hero_auto.png) | ![Low-confidence review routed to a human](assets/hero_human.png) |
 |---|---|
 | **Decided automatically:** confidence clears the 0.9 threshold and the supporting quote is verified verbatim on the page. | **Sent to a human:** privilege confidence (0.87) falls below the 0.9 threshold, so the page is routed for human review with the reason. |
+
+**At a glance** (76 scans; labels made by Gemini 4 models, not by an attorney):
+
+- **Agreement with the labels on all 76:** single-call baseline 64 (84%), Five Sigma 71 (93%), against Argon's model labels. Against a second labeler it is 68 and 71; against a third the baseline is ahead, 69 and 66.
+- **Decided alone at threshold 0.9:** 35 of 76. No model labeler disputes the responsiveness or privilege call on any of the 35. One labeler disputes the request tag on two of them.
+- **Every disagreement with Argon's labels went to a human:** five documents, all below the threshold.
 
 ## The problem
 
 In litigation, lawyers code thousands of documents. For each one they decide whether it is responsive to a document request, which request, and whether it is privileged. Models do this fast, but a wrong privilege call that nobody looks at can waive privilege. A reviewer needs to know which calls can be trusted without checking and which cannot.
 
 ## What it does
+
+**Scan → Hydrogen (read) → Decisions API (probabilities) → Neon (quote) → code check → decided automatically, or sent to a human.**
 
 The input is one scanned page: a photo, a scan or a PDF. Three Gemini 4 models each do one job, and then code checks their work:
 
