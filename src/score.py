@@ -2,7 +2,7 @@
 
 Results are given for all labeled documents and separately for the two ways documents were
 picked (keyword search vs random row), because keyword-picked documents are easier."""
-import json, math, os
+import json, math, os, re
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LABELS_FILE = os.environ.get("LABELS_FILE", "labels.json")
@@ -12,6 +12,10 @@ L = json.loads((ROOT / "eval" / LABELS_FILE).read_text()) if (ROOT / "eval" / LA
 R = {json.loads(l)["doc_id"]: json.loads(l) for l in (ROOT / "eval" / "results.jsonl").open()}
 E = [json.loads(l) for l in (ROOT / "data" / "emails.jsonl").open()]
 GROUP = {e["doc_id"]: ("keyword" if e["source"].startswith("search:") else "random") for e in E}
+def _text(e): return re.sub(r"\W+", " ", e["body"].lower()).strip()[:400]
+_seen = {}
+for e in E: _seen.setdefault(_text(e), e["doc_id"])
+FIRST_COPY = set(_seen.values())  # the corpus holds the same email in several mailboxes; this keeps one scan per distinct email
 QUERIES = sorted({e["source"].split(":", 1)[1] for e in E if e["source"].startswith("search:")})
 def usable(r):
     """Both the system and the baseline produced an answer (same filter as sweep.py)."""
@@ -68,16 +72,18 @@ def detail(name, s):
 
 def main():
     groups = [("All labeled documents", DOCS), ("Random documents", [d for d in DOCS if GROUP[d] == "random"]),
-              ("Keyword-picked documents", [d for d in DOCS if GROUP[d] == "keyword"])]
+              ("Keyword-picked documents", [d for d in DOCS if GROUP[d] == "keyword"]),
+              ("Distinct emails only (each duplicate counted once)", [d for d in DOCS if d in FIRST_COPY])]
     S = [(name, stats(docs)) for name, docs in groups]
     a = S[0][1]; n = a["n"]
     nk = sum(1 for g in GROUP.values() if g == "keyword")
     who = "the attorney" if not MODEL_LABELS else "the reference model"
     if MODEL_LABELS:
         title = f"# Agreement with model-made labels on {n} scans (NOT attorney labels)"
-        how = ("**These labels were made by a model (Gemini 4 Carbon, through the labeling page, from the scan and the review "
-               "instructions only), not by a person.** So \"right\" below means \"agrees with Gemini 4 Carbon\", which is weaker than "
-               "accuracy: Carbon can be wrong, and it is from the same model family as the system under test. ")
+        m = "Gemini 4 " + TAG.strip("_").capitalize()
+        how = (f"**These labels were made by a model ({m}, given only the scan and the review instructions), not by a person.** "
+               f"So \"right\" below means \"agrees with {m}\", which is weaker than accuracy: {m} can be wrong, it is from the same "
+               "model family as the system under test, and like the baseline it is a single model reading the page. ")
     else:
         title = f"# Results on {n} attorney-labeled scans"
         how = "The attorney labeled the scans before seeing any model output. "
@@ -88,6 +94,9 @@ def main():
         "Keyword-picked documents are easier for any model, because the search term that found them is usually the reason they are "
         "responsive. So every number is given three ways: all documents, random only, keyword-picked only. "
         "**The random row is the fairer estimate of real-world performance.**", "",
+        f"**Duplicates.** The corpus stores the same email in several mailboxes, and {len(GROUP) - len(FIRST_COPY)} of the {len(GROUP)} test documents "
+        f"repeat the text of another one (all among the keyword-picked documents), so the set holds {len(FIRST_COPY)} distinct emails. Each copy is a "
+        "different degraded scan, but they are not independent tests. The last row counts each distinct email once.", "",
         how + "Model outputs and the auto-decision threshold (0.9) were "
         f"fixed and committed before the first label was saved. \"Right\" means all three calls match {who}: "
         "responsive or not, which request, privileged or not.", "",
