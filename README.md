@@ -25,7 +25,7 @@ A document is decided automatically only if confidence is at or above a threshol
 
 - **Documents:** 76 public Enron emails (Hugging Face `corbt/enron-emails`), each rendered as a page and degraded by `src/scan.py` (skew, blur, noise, fax header, Bates stamp, margin note in a handwriting font, perspective).
 - **Requests:** three mock document requests and a privilege rule, in `data/requests.md`.
-- **Labels:** made by a model labeler that is given only the scan and the review instructions. No attorney has labeled the set yet. See Results.
+- **Labels:** made by two model labelers, each given only the scan and the review instructions. No attorney has labeled the set yet. See Results.
 - **Order of events, checkable in the git history:** model outputs for all 76 documents (`eval/results.jsonl`) were committed before the first label was saved. The scorer and the rule for picking a new threshold were also committed before the first label. The threshold in that run was 0.9.
 - **Two runs, one scored:** the first run (12:15) used a personal API key instead of the hackathon one. We ran everything again on the hackathon key and committed that run at 12:50. No label existed yet, and we never scored the first run or compared it with the second. Only the second run is scored. The first is in the git history.
 
@@ -33,9 +33,13 @@ A document is decided automatically only if confidence is at or above a threshol
 
 Of the 76 documents, 40 were found by keyword searches for terms that match the requests (for example `LJM`, `Raptor` and `document retention`). The other 36 came from random positions in the corpus. Keyword-picked documents are easier for any model, because the search term is usually what makes them responsive. So results are reported three ways: all documents, random only, and keyword-picked only. The random group is the fairer estimate.
 
+**Duplicates, found after scoring.** The corpus stores the same email in several mailboxes. Of the 76 test documents, 15 repeat the text of another one, all among the keyword-picked documents. So the set holds 61 distinct emails. Each copy is a different degraded scan, but the copies are not independent tests. The results table has a row that counts each distinct email once.
+
 ## Results
 
-**The labels are a model's, not an attorney's.** Gemini 4 Argon labeled all 76 scans. It was given only the scan and the review instructions (`src/model_label.py`). So "right" below means "agrees with Argon". A second model labeler, Gemini 4 Carbon working through the labeling page, has labeled 38 of the scans so far and agrees with Argon on all 38.
+**The labels are two models', not an attorney's.** Two models labeled all 76 scans independently: Gemini 4 Argon through the API (`src/model_label.py`) and Gemini 4 Carbon through the labeling page. Each saw only the scan and the review instructions. They agree on 72 of 76. The four differences are all privilege calls (DOC-040, DOC-051, DOC-055, DOC-072).
+
+The table uses Argon's labels, so "right" means "agrees with Argon". Carbon's labels are scored in `eval/REPORT_carbon.md` and compared below.
 
 Threshold 0.9, fixed before any label existed:
 
@@ -44,12 +48,14 @@ Threshold 0.9, fixed before any label existed:
 | All | 76 | 64/76 (84%) | 71/76 (93%) | 35/35 (100%) | 35/76 (46%) | 0 |
 | Random | 36 | 35/36 (97%) | 34/36 (94%) | 21/21 (100%) | 21/36 (58%) | 0 |
 | Keyword-picked | 40 | 29/40 (72%) | 37/40 (92%) | 14/14 (100%) | 14/40 (35%) | 0 |
+| Distinct emails only | 61 | 53/61 (87%) | 58/61 (95%) | 30/30 (100%) | 30/61 (49%) | 0 |
 
 95% intervals on all documents: baseline 74% to 91%, Five Sigma on everything 86% to 97%, Five Sigma on what it decided alone 90% to 100%. The sample is small, so read a difference of a few documents as noise.
 
 What the numbers say:
 
-- **Nothing wrong got through.** The system decided 35 documents on its own and matched the labels on all 35. It disagreed with the labels on five documents and sent all five to a human.
+- **Nothing wrong got through, under either labeler.** The system decided 35 documents on its own and matched both Argon's and Carbon's labels on all 35. It disagreed with Argon on five documents and sent all five to a human.
+- **The edge over the baseline is small and depends on the labeler.** On the 61 distinct emails the system matches Argon on 58 and the baseline on 53. Against Carbon's labels it is 56 against 55. The firm result is the first one, not this one.
 - **The price is review.** It sent 41 documents to a human, and it had 36 of those right anyway.
 - **The baseline over-calls privilege.** Of its 12 disagreements, 8 are documents it called privileged and the labels did not. Privilege precision: baseline 43%, Five Sigma 71%.
 - **On random documents the system is no better than the baseline** (34 of 36 against 35 of 36). The gain is on keyword-picked documents (37 of 40 against 29 of 40), where the privileged-looking documents are.
@@ -71,7 +77,7 @@ No wrong call got through at 0.9. The failure we saw was cost: more than half th
 | DOC-051 to 076, threshold 0.9 | 12/26 (46%) | 0 |
 | DOC-051 to 076, threshold 0.8 | 15/26 (58%) | 0 |
 
-On the 26 documents that the choice never used, 0.8 decides three more documents and still lets nothing wrong through. Below 0.8 wrong calls start to get through: one at 0.7 in each group.
+On the 26 documents that the choice never used, 0.8 decides three more documents and still lets nothing wrong through. Six of those 26 repeat the text of a tuning document, so they are not a clean test. On the 20 that do not, 0.8 decides 12 where 0.9 decided 9, also with nothing wrong. Below 0.8 wrong calls start to get through: one at 0.7 in each group. Carbon's labels pick the same threshold and give the same counts.
 
 ![Threshold curve](eval/threshold_curve_argon.png)
 
@@ -82,12 +88,12 @@ The quote check added little on this set. It sent one document to a human at 0.9
 - **Privilege is the weak point.** Four of the five disagreements are privilege calls. In two the system missed privilege that the labeler found (DOC-010, DOC-040). In two it called privilege that the labeler did not (DOC-023, DOC-072). Its confidence on all four was between 0.51 and 0.80, so all four went to a human.
 - **One responsiveness miss.** DOC-058 is an automated transmission notice that the labeler tied to the California market and the system did not.
 - **It decides less than half the documents alone at 0.9**, and 62% at 0.8.
-- **The labels are a model's.** Argon marked 19 of the 76 as documents a careful reviewer could disagree on. The system sent 16 of those 19 to a human, which suggests its doubt lands in the right places, but no attorney has checked the labels.
+- **The labels are models'.** The two labelers disagree with each other on four privilege calls, which is as many as the system's own privilege disagreements. Argon marked 19 of the 76 as documents a careful reviewer could disagree on. The system sent 16 of those 19 to a human, which suggests its doubt lands in the right places, but no attorney has checked the labels.
 
 Limits of the test itself:
 
 - The scans are synthetic. Real paper scans and real handwriting will be harder.
-- The sample is small. Differences of a few documents are noise.
+- The sample is small: 61 distinct emails. Differences of a few documents are noise.
 - Each document is one page, and all are short emails (250 to 2,200 characters).
 - The Enron corpus is public and widely used, so the models may have seen these emails in training.
 - The labeler, like the baseline, is one model reading the page. That may favor the baseline.
