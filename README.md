@@ -68,6 +68,8 @@ Full detail is in `eval/REPORT_argon.md`.
 
 A third model labeler, Gemini 4 Neon (`eval/labels_neon.json`), was added later under the same scan-only prompt (`eval/AGREEMENT.md`). Pairwise agreement on all three calls across the 76 scans is 72/76 (95%) for Argon vs Carbon, 71/76 (93%) for Carbon vs Neon, and 67/76 (88%) for Argon vs Neon, with all three unanimous on 67/76. Neon is also the model that finds supporting quotes inside Stage 3 of the system, so it is less independent than Argon and Carbon.
 
+We also ran a synthetic second-look model check on the 25 contested, disagreement, and control scans (`eval/labels_synthetic25.json`, reported in `eval/AGREEMENT.md`) with extra guidance on privilege boundaries and litigation holds. Those 25 labels are still synthetic model output, not human attorney review.
+
 ## What we changed after seeing failures
 
 No wrong call got through at 0.9. The failure we saw was cost: more than half the documents went to a human, most of them needlessly. So we lowered the threshold, by the rule fixed in advance in `src/sweep.py`:
@@ -124,7 +126,7 @@ Limits of the test itself:
 - **Built on hackathon day:** everything in this repository was written on Nov 21, 2026 at the Gemini 4 NYC Hackathon (Problem Statement One), from the first commit to the final commit in `git log`.
 - **Public data only:** source emails come from `corbt/enron-emails` on Hugging Face; synthetic scan rendering and degradation are in `src/scan.py`.
 - **Pre-committed predictions:** `eval/results.jsonl` and `src/sweep.py` were committed before any label file existed (checkable via `git log --reverse`).
-- **Disclosed model labels:** every label file (`eval/labels_argon.json`, `eval/labels_carbon.json`, `eval/labels_neon.json`) is a Gemini 4 model output, never presented as human attorney review.
+- **Disclosed model labels:** every label file (`eval/labels_argon.json`, `eval/labels_carbon.json`, `eval/labels_neon.json`, `eval/labels_synthetic25.json`) is a Gemini 4 model output, never presented as human attorney review.
 
 ## Run it
 
