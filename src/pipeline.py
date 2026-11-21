@@ -110,6 +110,10 @@ def review(path):
     text = read_page(path)
     dec = decide(path, text)
     ev = evidence(text, dec)
+    return finalize(text, dec, ev, t0)
+
+def finalize(text, dec, ev, t0):
+    """Stage 4, plain code: check every quote, then auto-decide or route to a human. Shared by review() and the live demo."""
     checks = {k: {"quote": v, "verified": verify(text, v)} for k, v in ev.items()}
     resp = dec["p_responsive"] >= 0.5
     priv = dec["p_privileged"] >= 0.5
