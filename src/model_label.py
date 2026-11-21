@@ -4,7 +4,7 @@ It is given nothing else: not the email text, not how the document was picked, n
 Its labels are a model's opinion, never attorney labels; score them with LABELS_FILE=labels_<name>.json so the
 reports say so. Usage: python3 src/model_label.py <model> <name> [first_doc last_doc]
 Example: python3 src/model_label.py gemini-4-argon argon 1 76   ->  eval/labels_argon.json (+ _notes.json)"""
-import json, sys, concurrent.futures as cf
+import json, os, sys, concurrent.futures as cf
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pipeline as P
@@ -36,6 +36,30 @@ def label(model, doc, prompt=PROMPT):
             err = str(e)[:200]
     return doc, None, {"error": err}
 
+def _repo_file(raw):
+    """Return a resolved file path strictly inside ROOT, or None if not an existing repo file."""
+    root = ROOT.resolve()
+    p = Path(raw)
+    cand = (p if p.is_absolute() else root / p).resolve()
+    if not cand.is_relative_to(root) or not str(cand).startswith(str(root) + os.sep):
+        raise ValueError(f"path outside repository root: {raw}")
+    return cand if cand.is_file() else None
+
+def _build_prompt(guidance):
+    if not guidance:
+        return PROMPT
+    gp = _repo_file(guidance)
+    extra = gp.read_text().strip() if gp is not None else guidance.strip()
+    return PROMPT + "\n\n" + extra
+
+def _load_docs(docs_arg):
+    if not docs_arg:
+        return [json.loads(l)["doc_id"] for l in (ROOT / "data" / "emails.jsonl").open()]  # ids only; no other field is read
+    dp = _repo_file(docs_arg)
+    if dp is None:
+        raise FileNotFoundError(f"docs file not found inside repository: {docs_arg}")
+    return json.loads(dp.read_text())
+
 def main():
     import argparse
     ap = argparse.ArgumentParser()
@@ -47,19 +71,11 @@ def main():
     args = ap.parse_args()
     model, name = args.model, args.name
     lo, hi = (args.bounds[0], args.bounds[1]) if len(args.bounds) >= 2 else (1, 10**6)
-    prompt = PROMPT
-    if args.guidance:
-        gp = Path(args.guidance) if Path(args.guidance).exists() else (ROOT / args.guidance)
-        extra = gp.read_text().strip() if gp.exists() else args.guidance.strip()
-        prompt = PROMPT + "\n\n" + extra
+    prompt = _build_prompt(args.guidance)
     out, notes_path = ROOT / "eval" / f"labels_{name}.json", ROOT / "eval" / f"labels_{name}_notes.json"
     L = json.loads(out.read_text()) if out.exists() else {}
     N = json.loads(notes_path.read_text()) if notes_path.exists() else {}
-    if args.docs:
-        dp = Path(args.docs) if Path(args.docs).exists() else (ROOT / args.docs)
-        docs = json.loads(dp.read_text())
-    else:
-        docs = [json.loads(l)["doc_id"] for l in (ROOT / "data" / "emails.jsonl").open()]  # ids only; no other field is read
+    docs = _load_docs(args.docs)
     todo = [d for d in docs if lo <= int(d.split("-")[1]) <= hi and d not in L]
     with cf.ThreadPoolExecutor(6) as ex:
         futs = [ex.submit(label, model, d, prompt) for d in todo]
