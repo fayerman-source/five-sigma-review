@@ -62,6 +62,8 @@ What the numbers say:
 
 Full detail is in `eval/REPORT_argon.md`.
 
+A third model labeler, Gemini 4 Neon (`eval/labels_neon.json`), was added later under the same scan-only prompt (`eval/AGREEMENT.md`). Pairwise agreement on all three calls across the 76 scans is 72/76 (95%) for Argon vs Carbon, 71/76 (93%) for Carbon vs Neon, and 67/76 (88%) for Argon vs Neon, with all three unanimous on 67/76. Neon is also the model that finds supporting quotes inside Stage 3 of the system, so it is less independent than Argon and Carbon.
+
 ## What we changed after seeing failures
 
 No wrong call got through at 0.9. The failure we saw was cost: more than half the documents went to a human, most of them needlessly. So we lowered the threshold, by the rule fixed in advance in `src/sweep.py`:
