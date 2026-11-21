@@ -1,5 +1,6 @@
 .env
 .env.*
+!.env.example
 HANDOFF.md
 BRIEF.md
 __pycache__/
