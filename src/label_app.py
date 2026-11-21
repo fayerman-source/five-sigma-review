@@ -7,6 +7,8 @@ from flask import Flask, send_file, request, jsonify
 ROOT = Path(__file__).resolve().parent.parent
 LABELS = ROOT / "eval" / os.environ.get("LABELS_FILE", "labels.json")  # labels.json is the attorney's; a model labeler gets its own file
 DOCS = [json.loads(l)["doc_id"] for l in (ROOT / "data" / "emails.jsonl").open()]
+if os.environ.get("DOCS_FILE"):  # label only the documents listed in this JSON file, in its order
+    DOCS = json.loads((ROOT / os.environ["DOCS_FILE"]).read_text())
 app = Flask(__name__)
 
 def load():
