@@ -10,7 +10,11 @@ ROOT = Path(__file__).resolve().parent.parent
 FONTS = ROOT / "assets" / "fonts"
 SERIF = "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf"
 MONO = str(FONTS / "cour.ttf") if (FONTS / "cour.ttf").exists() else "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
-HAND = str(FONTS / "Inkfree.ttf")
+HAND = next((str(p) for p in (
+    FONTS / "Inkfree.ttf",
+    Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf"),
+    Path("/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf"),
+) if p.exists()), "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
 NOTES = ["call legal re this", "?? who approved", "keep - JS", "see attached", "FYI only", "not for distribution",
          "follow up w/ Andy", "per our call", "dup?", "draft"]
 
