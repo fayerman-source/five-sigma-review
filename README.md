@@ -23,7 +23,7 @@ A document is decided automatically only if confidence is at or above a threshol
 
 ## How it was tested
 
-- **Documents:** 76 public Enron emails (Hugging Face `corbt/enron-emails`), each rendered as a page and degraded by `src/scan.py` (skew, blur, noise, fax header, Bates stamp, margin note in a handwriting font, perspective).
+- **Documents:** 76 public Enron emails (Hugging Face `corbt/enron-emails`), each rendered as a page and degraded by `src/scan.py` (skew, blur, noise, fax header, Bates stamp, margin note in a handwriting font, perspective). The committed scans were rendered with Courier New and Ink Free, which are not included in this repository. Re-running `src/scan.py` without them uses fallback fonts and produces different-looking scans.
 - **Requests:** three mock document requests and a privilege rule, in `data/requests.md`.
 - **Labels:** made by two model labelers, each given only the scan and the review instructions. No attorney has labeled the set yet. See Results.
 - **Order of events, checkable in the git history:** model outputs for all 76 documents (`eval/results.jsonl`) were committed before the first label was saved. The scorer and the rule for picking a new threshold were also committed before the first label. The threshold in that run was 0.9.
