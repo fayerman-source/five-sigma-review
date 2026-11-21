@@ -22,12 +22,16 @@ PROMPT = ("You are an attorney doing first-pass document review. Review instruct
 
 def label(model, doc):
     mime, data = P._img_part(ROOT / "data" / "scans" / f"{doc}.jpg")
-    for attempt in range(3):
+    for _ in range(3):
         try:
             d = json.loads(P._gen(model, [{"inline_data": {"mime_type": mime, "data": data}}, {"text": PROMPT}], json_mode=True, thinking="high"))
-            resp = bool(d["responsive"]); req = d.get("request") if resp else "none"
-            if resp and req not in ("R1", "R2", "R3"): raise ValueError(f"responsive but request={req!r}")
-            return doc, {"responsive": resp, "request": req, "privileged": bool(d["privileged"])}, {"ambiguous": bool(d.get("ambiguous")), "reason": str(d.get("reason", ""))[:300]}
+            resp, priv = d["responsive"], d["privileged"]
+            if not isinstance(resp, bool) or not isinstance(priv, bool):
+                raise ValueError(f"non-boolean label: responsive={resp!r}, privileged={priv!r}")
+            req = d.get("request") if resp else "none"
+            if resp and req not in ("R1", "R2", "R3"):
+                raise ValueError(f"responsive but request={req!r}")
+            return doc, {"responsive": resp, "request": req, "privileged": priv}, {"ambiguous": d.get("ambiguous") is True, "reason": str(d.get("reason", ""))[:300]}
         except Exception as e:
             err = str(e)[:200]
     return doc, None, {"error": err}
