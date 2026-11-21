@@ -86,11 +86,11 @@ def _describe_auto_diffs(auto_diffs):
                 f"{tag_note}; responsiveness and privilege match")
     return f"{len(auto_diffs)} automatic decisions differ from synthetic25"
 
-def _score_synthetic25(sdocs, L25, N25, maj):
+def _score_synthetic25(sdocs, labels_25, notes_25, maj):
     s_sys = s_base = s_auto = s_auto_ok = 0
     auto_diffs, diff25 = [], []
     for d in sdocs:
-        g = norm_call(L25[d])
+        g = norm_call(labels_25[d])
         y, b = RESULTS[d]["system"], RESULTS[d]["baseline"]
         yc = norm_call(y)
         oy, ob = yc == g, norm_call(b) == g
@@ -103,7 +103,7 @@ def _score_synthetic25(sdocs, L25, N25, maj):
             if not oy:
                 auto_diffs.append((d, yc, g))
         if g != maj[d] or (is_auto and not oy):
-            reason = (N25.get(d, {}).get("reason") or "").replace("|", "/")
+            reason = (notes_25.get(d, {}).get("reason") or "").replace("|", "/")
             diff25.append((d, g, maj[d], yc, y["decision"], reason))
     return s_sys, s_base, s_auto, s_auto_ok, auto_diffs, diff25
 
@@ -112,15 +112,15 @@ def _synthetic25_section(maj):
     if not synth_path.exists():
         return []
     notes25_path = ROOT / "eval" / "labels_synthetic25_notes.json"
-    L25 = json.loads(synth_path.read_text())
-    N25 = json.loads(notes25_path.read_text()) if notes25_path.exists() else {}
-    sdocs = sorted(d for d in L25 if d in maj)
+    labels_25 = json.loads(synth_path.read_text())
+    notes_25 = json.loads(notes25_path.read_text()) if notes25_path.exists() else {}
+    sdocs = sorted(d for d in labels_25 if d in maj)
     sn = len(sdocs)
-    ag_a = sum(1 for d in sdocs if norm_call(L25[d]) == norm_call(LABELS["argon"][d]))
-    ag_c = sum(1 for d in sdocs if norm_call(L25[d]) == norm_call(LABELS["carbon"][d]))
-    ag_n = sum(1 for d in sdocs if norm_call(L25[d]) == norm_call(LABELS["neon"][d]))
-    ag_m = sum(1 for d in sdocs if norm_call(L25[d]) == maj[d])
-    s_sys, s_base, s_auto, s_auto_ok, auto_diffs, diff25 = _score_synthetic25(sdocs, L25, N25, maj)
+    ag_a = sum(1 for d in sdocs if norm_call(labels_25[d]) == norm_call(LABELS["argon"][d]))
+    ag_c = sum(1 for d in sdocs if norm_call(labels_25[d]) == norm_call(LABELS["carbon"][d]))
+    ag_n = sum(1 for d in sdocs if norm_call(labels_25[d]) == norm_call(LABELS["neon"][d]))
+    ag_m = sum(1 for d in sdocs if norm_call(labels_25[d]) == maj[d])
+    s_sys, s_base, s_auto, s_auto_ok, auto_diffs, diff25 = _score_synthetic25(sdocs, labels_25, notes_25, maj)
     auto_diff_desc = _describe_auto_diffs(auto_diffs)
     out_lines = [
         "",
