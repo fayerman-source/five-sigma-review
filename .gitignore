@@ -2,3 +2,6 @@
 .env.*
 HANDOFF.md
 BRIEF.md
+__pycache__/
+*.pyc
+VIDEO_SCRIPT.md
