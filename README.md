@@ -83,6 +83,20 @@ On the 26 documents that the choice never used, 0.8 decides three more documents
 
 The quote check added little on this set. At 0.9 one document failed the quote check, but its confidence was already below the threshold, so the check changed no decision there. In the replay, dropping the check changes the outcome only at a threshold of 0.5, where it stops one wrong call. Every threshold is in `eval/THRESHOLDS_argon.md`.
 
+## Does the confidence mean anything?
+
+On this small sample, yes: agreement with the labels rises with the system's confidence. Every document with confidence of 0.8 or more matches the labels (46 of 46), and all five disagreements sit below 0.8. Carbon's labels give the same counts in every row. The bins are small, 76 documents and 61 distinct emails, so one or two documents can move a row a long way. This shows the confidence ranks documents sensibly here; it does not show that a stated 0.9 means 90% right.
+
+| System confidence | Documents | All three calls match Argon's labels |
+|---|---|---|
+| below 0.7 | 13 | 10/13 (77%) |
+| 0.7 to 0.8 | 17 | 15/17 (88%) |
+| 0.8 to 0.9 | 11 | 11/11 (100%) |
+| 0.9 to 0.95 | 14 | 14/14 (100%) |
+| 0.95 and above | 21 | 21/21 (100%) |
+
+The same breakdown for each probability on its own is in `eval/CALIBRATION_argon.md` and `eval/CALIBRATION_carbon.md`.
+
 ## Where it still fails
 
 - **Privilege is the weak point.** Four of the five disagreements are privilege calls. In two the system missed privilege that the labeler found (DOC-010, DOC-040). In two it called privilege that the labeler did not (DOC-023, DOC-072). Its confidence on all four was between 0.51 and 0.80, so all four went to a human.
@@ -110,6 +124,7 @@ python3 src/label_app.py                  # attorney labeling page: http://127.0
 python3 src/model_label.py gemini-4-argon argon   # model labeler -> eval/labels_argon.json
 LABELS_FILE=labels_argon.json python3 src/score.py   # -> eval/REPORT_argon.md (without LABELS_FILE: attorney labels -> eval/REPORT.md)
 LABELS_FILE=labels_argon.json python3 src/sweep.py   # -> eval/THRESHOLDS_argon.md, eval/threshold_curve_argon.png
+LABELS_FILE=labels_argon.json python3 src/calibration.py   # -> eval/CALIBRATION_argon.md
 ```
 
 The live demo differs from the scored run in three ways. None of them affects the evaluation:
