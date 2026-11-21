@@ -75,9 +75,10 @@ def main():
     who = "the attorney" if not MODEL_LABELS else "the reference model"
     if MODEL_LABELS:
         title = f"# Agreement with model-made labels on {n} scans (NOT attorney labels)"
-        how = ("**These labels were made by a model (Gemini 4 Carbon, through the labeling page, from the scan and the review "
-               "instructions only), not by a person.** So \"right\" below means \"agrees with Gemini 4 Carbon\", which is weaker than "
-               "accuracy: Carbon can be wrong, and it is from the same model family as the system under test. ")
+        m = "Gemini 4 " + TAG.strip("_").capitalize()
+        how = (f"**These labels were made by a model ({m}, given only the scan and the review instructions), not by a person.** "
+               f"So \"right\" below means \"agrees with {m}\", which is weaker than accuracy: {m} can be wrong, it is from the same "
+               "model family as the system under test, and like the baseline it is a single model reading the page. ")
     else:
         title = f"# Results on {n} attorney-labeled scans"
         how = "The attorney labeled the scans before seeing any model output. "

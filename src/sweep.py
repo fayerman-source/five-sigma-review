@@ -90,7 +90,7 @@ def chart(docs, picked, path):
     ax.set_yticklabels(["0%", "25%", "50%", "75%", "100%"]); ax.set_xlabel("Confidence required to decide without a human", color=muted)
     ax.yaxis.grid(True, color=grid, lw=1); ax.set_axisbelow(True); ax.tick_params(colors=muted, length=0)
     for s in ax.spines.values(): s.set_visible(False)
-    ax.set_title(f"Automation and accuracy at each confidence threshold (all labeled documents, n = {len(docs)})", color=ink, fontsize=11, loc="left", pad=28)
+    ax.set_title(f"Automation and accuracy at each confidence threshold ({'model-made labels' if MODEL_LABELS else 'attorney labels'}, n = {len(docs)})", color=ink, fontsize=11, loc="left", pad=28)
     ax.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=2, frameon=False, fontsize=9, labelcolor=ink, borderaxespad=0.2)
     fig.tight_layout(); fig.savefig(path, facecolor=surface); plt.close(fig)
 
@@ -101,11 +101,11 @@ def main():
     before, after = at(tune, PREREGISTERED), at(tune, picked)
     lines = ["# What we changed after seeing failures: the auto-decision threshold", ""]
     if MODEL_LABELS:
-        lines += ["**Scored against labels made by a model (Gemini 4 Carbon), not by the attorney. \"Right\" and \"wrong\" here mean "
-                  "agreement or disagreement with that model.**", ""]
+        lines += [f"**Scored against labels made by a model (Gemini 4 {TAG.strip('_').capitalize()}), not by the attorney. \"Right\" and \"wrong\" "
+                  "here mean agreement or disagreement with that model.**", ""]
     lines += [
         f"The system was run once, with the threshold fixed at {PREREGISTERED} before any label existed. After scoring, we replayed the "
-        "stored outputs at other thresholds (no new model calls). A document is decided without a human only if its calibrated "
+        "stored outputs at other thresholds (no new model calls). A document is decided without a human only if its "
         "confidence is at or above the threshold AND every supporting quote is found verbatim on the page; the last column drops "
         "the quote check to show what that check adds.", "",
         f"To avoid tuning on the test set, the threshold was picked on DOC-001..{TUNE_MAX:03d} only, by this rule: the lowest threshold "
