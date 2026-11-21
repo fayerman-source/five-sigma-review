@@ -1,11 +1,11 @@
 """Attorney labeling page: Eli codes the held-out test documents BEFORE any model output is shown.
 Keys: r = responsive, n = not responsive, 1/2/3 = request, p = privileged toggle, Enter = save & next."""
-import json
+import json, os
 from pathlib import Path
 from flask import Flask, send_file, request, jsonify
 
 ROOT = Path(__file__).resolve().parent.parent
-LABELS = ROOT / "eval" / "labels.json"
+LABELS = ROOT / "eval" / os.environ.get("LABELS_FILE", "labels.json")  # labels.json is the attorney's; a model labeler gets its own file
 DOCS = [json.loads(l)["doc_id"] for l in (ROOT / "data" / "emails.jsonl").open()]
 app = Flask(__name__)
 
@@ -55,4 +55,4 @@ def label(doc):
     LABELS.write_text(json.dumps(L, indent=1)); return jsonify(ok=True)
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8800)
+    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", "8800")))
