@@ -62,12 +62,19 @@ def read_page(path):
                  "[handwritten]). Do not summarize, correct or add anything. Output only the transcription."}])
     return t.strip()
 
-def decide(path, text):
+def custom_instructions(topic):
+    """Review instructions for one request typed in the live demo (the scored evaluation never uses this)."""
+    privilege = REQUESTS[REQUESTS.index("## Privilege"):].replace("(in-house Enron legal or outside counsel such as Vinson & Elkins)", "(in-house or outside counsel)")
+    return ("# Document request\n\nA reviewer codes each document for:\n\n## Responsiveness: a document is RESPONSIVE if it concerns this request\n"
+            "- R1: " + topic.strip() + "\nAnything else is NOT RESPONSIVE.\n\n" + privilege)
+
+def decide(path, text, custom=None):
     mime, data = _img_part(path)
     kind = "document" if mime == "application/pdf" else "image"
+    instr = custom_instructions(custom) if custom else REQUESTS
     body = {"model": "gemini-decision-1",
             "input": [{"role": "user", "parts": [{kind: {"data": data, "mime_type": mime}},
-                      {"text": "Review instructions:\n" + REQUESTS + "\n\nTranscription of the page:\n" + text}]}],
+                      {"text": "Review instructions:\n" + instr + "\n\nTranscription of the page:\n" + text}]}],
             "questions": {
                 "responsive": {"type": "noul", "instructions": "Under the review instructions, is this document RESPONSIVE to at least one request (R1, R2 or R3)?"},
                 "request": {"type": "choice", "instructions": "Which request does this document most concern?",
@@ -76,22 +83,26 @@ def decide(path, text):
                                          "R3": "Document retention, preservation or destruction",
                                          "none": "None of the requests"}},
                 "privileged": {"type": "noul", "instructions": "Under the review instructions, is this document PRIVILEGED (a confidential lawyer communication seeking or giving legal advice)? A confidentiality footer alone is not enough."}}}
+    if custom:
+        body["questions"]["responsive"]["instructions"] = "Under the review instructions, is this document RESPONSIVE to request R1?"
+        body["questions"]["request"]["criteria"] = {"R1": custom.strip(), "none": "Not about the request"}
     try:
         d = _post("decisions", body)
     except RuntimeError as e:
         if "input" not in str(e): raise
-        body["input"] = "Review instructions:\n" + REQUESTS + "\n\nTranscription of the page:\n" + text
+        body["input"] = "Review instructions:\n" + instr + "\n\nTranscription of the page:\n" + text
         d = _post("decisions", body)
     a = d["answers"]
     return {"p_responsive": a["responsive"]["noul"], "request": a["request"]["choice"],
             "p_request": a["request"].get("probabilities", {}), "p_privileged": a["privileged"]["noul"]}
 
-def evidence(text, dec):
+def evidence(text, dec, custom=None):
+    instr = custom_instructions(custom) if custom else REQUESTS
     want = []
     if dec["p_responsive"] >= 0.5: want.append(f"responsive to {dec['request']}")
     if dec["p_privileged"] >= 0.5: want.append("privileged")
     if not want: return {}
-    t = _gen(EVIDENCE, [{"text": "Review instructions:\n" + REQUESTS + "\n\nDocument transcription:\n" + text +
+    t = _gen(EVIDENCE, [{"text": "Review instructions:\n" + instr + "\n\nDocument transcription:\n" + text +
         "\n\nFor each call below, copy the shortest exact passage (5-40 words, verbatim from the transcription, "
         "no edits) that best supports it, or null if nothing in the document supports it. Return JSON "
         '{"<call>": "<verbatim passage or null>"}. Calls: ' + json.dumps(want)}], json_mode=True)
