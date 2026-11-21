@@ -81,13 +81,13 @@ On the 26 documents that the choice never used, 0.8 decides three more documents
 
 ![Threshold curve](eval/threshold_curve_argon.png)
 
-The quote check added little on this set. It sent one document to a human at 0.9. In the replay, dropping the check changes the outcome only at a threshold of 0.5, where it stops one wrong call. Every threshold is in `eval/THRESHOLDS_argon.md`.
+The quote check added little on this set. At 0.9 one document failed the quote check, but its confidence was already below the threshold, so the check changed no decision there. In the replay, dropping the check changes the outcome only at a threshold of 0.5, where it stops one wrong call. Every threshold is in `eval/THRESHOLDS_argon.md`.
 
 ## Where it still fails
 
 - **Privilege is the weak point.** Four of the five disagreements are privilege calls. In two the system missed privilege that the labeler found (DOC-010, DOC-040). In two it called privilege that the labeler did not (DOC-023, DOC-072). Its confidence on all four was between 0.51 and 0.80, so all four went to a human.
 - **One responsiveness miss.** DOC-058 is an automated transmission notice that the labeler tied to the California market and the system did not.
-- **It decides less than half the documents alone at 0.9**, and 62% at 0.8.
+- **It decides less than half the documents alone at 0.9** (35 of 76), and 61% at 0.8 (46 of 76).
 - **The labels are models'.** The two labelers disagree with each other on four privilege calls, which is as many as the system's own privilege disagreements. Argon marked 19 of the 76 as documents a careful reviewer could disagree on. The system sent 16 of those 19 to a human, which suggests its doubt lands in the right places, but no attorney has checked the labels.
 
 Limits of the test itself:
