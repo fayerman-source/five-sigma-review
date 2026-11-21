@@ -12,11 +12,15 @@ ROOT = Path(__file__).resolve().parent.parent
 LABELS_FILE = os.environ.get("LABELS_FILE", "labels.json")
 MODEL_LABELS = LABELS_FILE != "labels.json"  # a model labeler, not the attorney; the report says so
 TAG = "" if not MODEL_LABELS else "_" + Path(LABELS_FILE).stem.replace("labels_", "")
-L = json.loads((ROOT / "eval" / LABELS_FILE).read_text())
-R = {json.loads(l)["doc_id"]: json.loads(l)["system"] for l in (ROOT / "eval" / "results.jsonl").open()}
+L = json.loads((ROOT / "eval" / LABELS_FILE).read_text()) if (ROOT / "eval" / LABELS_FILE).exists() else {}
+ROWS = {json.loads(l)["doc_id"]: json.loads(l) for l in (ROOT / "eval" / "results.jsonl").open()}
+def usable(r):
+    """Both the system and the baseline produced an answer (same filter as score.py)."""
+    return all(isinstance(r.get(k), dict) and "error" not in r[k] for k in ("system", "baseline"))
+R = {d: r["system"] for d, r in ROWS.items() if usable(r)}
 GROUP = {json.loads(l)["doc_id"]: ("keyword" if json.loads(l)["source"].startswith("search:") else "random")
          for l in (ROOT / "data" / "emails.jsonl").open()}
-DOCS = sorted(d for d in L if d in R and "error" not in R[d])
+DOCS = sorted(d for d in L if d in R)
 THRESHOLDS = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.97, 0.99]
 PREREGISTERED = 0.9
 TUNE_MAX = 50  # DOC-001..050 pick the threshold; DOC-051.. confirm it
@@ -28,9 +32,14 @@ def right(d):
 
 def evidence_ok(d): return all(c["verified"] for c in R[d]["evidence"].values())
 
+def conf(d):
+    """Unrounded confidence, computed exactly as pipeline.review() does (the stored "confidence" is rounded to 3 places)."""
+    p = R[d]["probs"]
+    return min(max(p["p_responsive"], 1 - p["p_responsive"]), max(p["p_privileged"], 1 - p["p_privileged"]))
+
 def at(docs, t, use_evidence=True):
     """Counts at threshold t: documents decided automatically, how many of those are right or wrong."""
-    auto = [d for d in docs if R[d]["confidence"] >= t and (evidence_ok(d) or not use_evidence)]
+    auto = [d for d in docs if conf(d) >= t and (evidence_ok(d) or not use_evidence)]
     ok = sum(right(d) for d in auto)
     return {"t": t, "n": len(docs), "auto": len(auto), "ok": ok, "wrong": len(auto) - ok,
             "wrong_ids": [d for d in auto if not right(d)]}
@@ -62,13 +71,14 @@ def chart(docs, picked, path):
     import matplotlib.pyplot as plt
     rows = [at(docs, t) for t in THRESHOLDS]
     x = list(range(len(THRESHOLDS)))
-    cov = [100 * r["auto"] / r["n"] for r in rows]
+    cov = [100 * r["auto"] / r["n"] if r["n"] else None for r in rows]
     acc = [100 * r["ok"] / r["auto"] if r["auto"] else None for r in rows]
     ink, muted, grid, surface = "#0b0b0b", "#52514e", "#e6e5e1", "#fcfcfb"
     fig, ax = plt.subplots(figsize=(8, 4.4), dpi=160, facecolor=surface); ax.set_facecolor(surface)
     series = [("Decided without a human", cov, "#2a78d6"), ("Auto-decided calls that are right", acc, "#eb6834")]
     for name, ys, color in series:
         pts = [(i, y) for i, y in zip(x, ys) if y is not None]
+        if not pts: continue
         ax.plot([p[0] for p in pts], [p[1] for p in pts], color=color, lw=2, marker="o", ms=6, mec=surface, mew=1.5,
                 solid_capstyle="round", solid_joinstyle="round", label=name, clip_on=False)
         ax.annotate(f"{pts[-1][1]:.0f}%", pts[-1], xytext=(9, 0), textcoords="offset points", va="center", color=ink, fontsize=10)

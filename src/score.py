@@ -8,12 +8,15 @@ ROOT = Path(__file__).resolve().parent.parent
 LABELS_FILE = os.environ.get("LABELS_FILE", "labels.json")
 MODEL_LABELS = LABELS_FILE != "labels.json"  # anything but the attorney's file is a model labeler, and the report says so
 TAG = "" if not MODEL_LABELS else "_" + Path(LABELS_FILE).stem.replace("labels_", "")
-L = json.loads((ROOT / "eval" / LABELS_FILE).read_text())
+L = json.loads((ROOT / "eval" / LABELS_FILE).read_text()) if (ROOT / "eval" / LABELS_FILE).exists() else {}
 R = {json.loads(l)["doc_id"]: json.loads(l) for l in (ROOT / "eval" / "results.jsonl").open()}
 E = [json.loads(l) for l in (ROOT / "data" / "emails.jsonl").open()]
 GROUP = {e["doc_id"]: ("keyword" if e["source"].startswith("search:") else "random") for e in E}
 QUERIES = sorted({e["source"].split(":", 1)[1] for e in E if e["source"].startswith("search:")})
-DOCS = sorted(d for d in L if d in R and "error" not in R[d]["system"] and "error" not in R[d]["baseline"])
+def usable(r):
+    """Both the system and the baseline produced an answer (same filter as sweep.py)."""
+    return all(isinstance(r.get(k), dict) and "error" not in r[k] for k in ("system", "baseline"))
+DOCS = sorted(d for d in L if d in R and usable(R[d]))
 
 def cmp(pred, gold):
     return (pred.get("responsive") == gold["responsive"],
@@ -22,14 +25,14 @@ def cmp(pred, gold):
 
 def prf(pairs):
     tp = sum(1 for p, g in pairs if p and g); fp = sum(1 for p, g in pairs if p and not g); fn = sum(1 for p, g in pairs if not p and g)
-    p = tp / (tp + fp) if tp + fp else 1.0; r = tp / (tp + fn) if tp + fn else 1.0
-    return f"precision {p:.0%}, recall {r:.0%} (TP {tp}, FP {fp}, FN {fn})"
+    p = f"{tp / (tp + fp):.0%}" if tp + fp else "n/a"; r = f"{tp / (tp + fn):.0%}" if tp + fn else "n/a"
+    return f"precision {p}, recall {r} (TP {tp}, FP {fp}, FN {fn})"
 
 def wilson(k, n, z=1.96):
     """95% Wilson interval for k right out of n, as text."""
     if not n: return "n/a"
     p = k / n; d = 1 + z * z / n; c = p + z * z / (2 * n); h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
-    return f"{(c - h) / d:.0%}–{(c + h) / d:.0%}"
+    return f"{max(0.0, (c - h) / d):.0%}–{min(1.0, (c + h) / d):.0%}"
 
 def frac(k, n): return f"{k}/{n} ({k / n:.0%})" if n else "0/0"
 
