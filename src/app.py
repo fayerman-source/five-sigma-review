@@ -27,6 +27,7 @@ h1{font-size:30px;margin:0;letter-spacing:-.02em}.tag{font-size:18px;color:var(-
 .pick b{display:block;font-size:17px}.pick span{color:var(--muted);font-size:14px}.pick.up{border-style:dashed;justify-content:center;min-height:108px}
 .pick[disabled]{opacity:.5;cursor:wait}
 #out{display:none}
+.own{display:block;margin-top:12px;color:var(--muted);font-size:14px}.own input{display:block;width:100%;margin-top:4px;padding:9px 12px;font:inherit;color:var(--ink);border:1px solid var(--line);border-radius:10px;background:var(--card)}
 .steps{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 12px}.step{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;color:var(--muted)}
 .step b{display:block;color:var(--ink);font-size:15px}.step.run{border-color:var(--ink)}.step.run b::after{content:" …"}.step.done b::after{content:" ✓";color:var(--go)}
 #verdict{border-radius:14px;padding:18px 22px;border:2px solid var(--line);background:var(--card)}
@@ -51,6 +52,7 @@ pre{white-space:pre-wrap;font:13px/1.5 ui-monospace,Consolas,monospace;margin:0;
 <button class="pick up" id=upbtn><span><b>Upload your own</b>scan, phone photo or PDF</span></button>
 <input type=file id=file accept="image/*,application/pdf" hidden>
 </div>
+<label class=own>Looking for something else? Type your own request and it replaces the three built-in ones (optional)<input id=custom maxlength=300 placeholder="for example: documents about pricing or discounts" autocomplete=off></label>
 <div class=steps>
 <div class=step id=s1><b>1 · Read</b>Gemini 4 Hydrogen transcribes the page</div>
 <div class=step id=s2><b>2 · Decide</b>Decisions API gives probabilities</div>
@@ -69,10 +71,10 @@ pre{white-space:pre-wrap;font:13px/1.5 ui-monospace,Consolas,monospace;margin:0;
 <div class=panel><h3>What the model read</h3><pre id=text class=wait>…</pre></div>
 </div>
 </section>
-<footer>Requests in this demo: R1 partnerships and off-balance-sheet vehicles (LJM, Raptor, Chewco, Whitewing) · R2 California electricity market · R3 document retention or destruction. A page is decided automatically only if confidence is at least __THRESH__ and every quote is found verbatim; otherwise a human gets it. Public data only. Not legal advice.</footer>
+<footer>Built-in requests: R1 partnerships and off-balance-sheet vehicles (LJM, Raptor, Chewco, Whitewing) · R2 California electricity market · R3 document retention or destruction. A page is decided automatically only if confidence is at least __THRESH__ and every quote is found verbatim; otherwise a human gets it. Public data only. Not legal advice.</footer>
 </main>
 <script>
-const $=id=>document.getElementById(id), REQ={R1:"R1 · partnerships / off-balance-sheet",R2:"R2 · California power market",R3:"R3 · document retention",none:"no request"};
+const $=id=>document.getElementById(id), REQ0={R1:"R1 · partnerships / off-balance-sheet",R2:"R2 · California power market",R3:"R3 · document retention",none:"no request"};let REQ=REQ0;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let busy=false,timer=null,t0=0,rawText="";
 function step(n,state){for(let i=1;i<=4;i++){const e=$("s"+i);e.className="step"+(i<n?" done":i===n?" "+state:"")}}
@@ -86,7 +88,7 @@ function highlight(quotes){let h=esc(rawText);
   try{h=h.replace(new RegExp(words.join("\\s+"),"i"),m=>"<mark>"+m+"</mark>")}catch(e){}}
  $("text").innerHTML=h;const m=$("text").querySelector("mark");if(m)$("text").scrollTop=Math.max(0,m.offsetTop-$("text").offsetTop-80)}
 function on(ev){
- if(ev.stage==="page"){$("page").className="";$("page").innerHTML=ev.kind==="pdf"?`<embed type="application/pdf" src="${ev.src}">`:`<img alt="uploaded page" src="${ev.src}">`}
+ if(ev.stage==="page"){REQ=ev.custom?{R1:"your request: "+ev.custom,none:"no request"}:REQ0;$("page").className="";$("page").innerHTML=ev.kind==="pdf"?`<embed type="application/pdf" src="${ev.src}">`:`<img alt="uploaded page" src="${ev.src}">`}
  else if(ev.stage==="read"){rawText=ev.text;$("text").className="";$("text").textContent=ev.text;step(2,"run")}
  else if(ev.stage==="decide"){const p=ev.probs,r=p.p_responsive,v=p.p_privileged;
   $("rbig").textContent=r>=.5?"Yes":"No";$("rbar").style.width=(Math.max(r,1-r)*100)+"%";$("rsub").textContent=Math.round(Math.max(r,1-r)*100)+"% confident"+(r>=.5?" · "+(REQ[p.request]||p.request):"");
@@ -106,9 +108,9 @@ async function run(body){if(busy)return;busy=true;document.querySelectorAll(".pi
    while((i=buf.indexOf("\n"))>=0){const line=buf.slice(0,i).trim();buf=buf.slice(i+1);if(line)on(JSON.parse(line))}}}
  catch(e){on({stage:"error",message:"The connection to the demo server failed ("+e.message+")."})}
  finally{busy=false;clearInterval(timer);document.querySelectorAll(".pick").forEach(b=>b.disabled=false)}}
-document.querySelectorAll("[data-sample]").forEach(b=>b.onclick=()=>{const f=new FormData();f.append("sample",b.dataset.sample);run(f)});
+document.querySelectorAll("[data-sample]").forEach(b=>b.onclick=()=>{const f=new FormData();f.append("sample",b.dataset.sample);f.append("custom",$("custom").value);run(f)});
 $("upbtn").onclick=()=>$("file").click();
-$("file").onchange=e=>{if(e.target.files[0]){const f=new FormData();f.append("f",e.target.files[0]);run(f);e.target.value=""}};
+$("file").onchange=e=>{if(e.target.files[0]){const f=new FormData();f.append("f",e.target.files[0]);f.append("custom",$("custom").value);run(f);e.target.value=""}};
 </script></html>"""
 
 def page_html():
@@ -126,15 +128,15 @@ def prepare(raw):
     path = tmp / "upload.jpg"; img.save(path, quality=90)
     return path, "image", "data:image/jpeg;base64," + base64.b64encode(path.read_bytes()).decode()
 
-def stages(path, kind, src):
+def stages(path, kind, src, custom=None):
     """Run the pipeline one stage at a time, yielding one JSON line per finished stage."""
     def line(**k): return json.dumps(k) + "\n"
-    yield line(stage="page", kind=kind, src=src)
+    yield line(stage="page", kind=kind, src=src, custom=custom)
     try:
         t0 = time.time()
         text = P.read_page(path); yield line(stage="read", text=text)
-        dec = P.decide(path, text); yield line(stage="decide", probs=dec)
-        ev = P.evidence(text, dec); yield line(stage="evidence")
+        dec = P.decide(path, text, custom); yield line(stage="decide", probs=dec)
+        ev = P.evidence(text, dec, custom); yield line(stage="evidence")
         yield line(stage="final", result=P.finalize(text, dec, ev, t0))
     except Exception as e:
         traceback.print_exc()
@@ -166,7 +168,8 @@ def api_review():
         path, kind, src = prepare(raw)
     except Exception as e:
         return ndjson(iter([json.dumps({"stage": "error", "message": f"The file could not be opened as an image or PDF ({type(e).__name__})."}) + "\n"]))
-    return ndjson(stages(path, kind, src))
+    custom = (request.form.get("custom") or "").strip()[:300] or None
+    return ndjson(stages(path, kind, src, custom))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "8801")), threaded=True)

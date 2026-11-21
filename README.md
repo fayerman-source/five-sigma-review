@@ -64,6 +64,10 @@ python3 src/score.py                      # -> eval/REPORT.md
 python3 src/sweep.py                      # -> eval/THRESHOLDS.md, eval/threshold_curve.png
 ```
 
-The live demo normalizes uploads first (rotates phone photos upright and shrinks them to 2,200 pixels on the long side). The scored scans did not go through that step.
+The live demo differs from the scored run in three ways, none of which touch the evaluation:
+
+- It normalizes uploads first (rotates phone photos upright and shrinks them to 2,200 pixels on the long side).
+- Its three sample scans (`data/samples/`) are public Enron emails that are not among the 76 test documents.
+- It has an optional box for typing your own request, which replaces the three built-in ones for that page. The evaluation used only the built-in requests.
 
 Public data only. Not legal advice.
