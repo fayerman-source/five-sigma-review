@@ -70,6 +70,18 @@ A third model labeler, Gemini 4 Neon (`eval/labels_neon.json`), was added later 
 
 We also ran a synthetic second-look model check on 25 contested, disagreement, and control scans (`eval/labels_synthetic25.json`, guidance in `data/privilege_guidance.md`, reported in `eval/AGREEMENT.md`); on the 25 documents it matches the three-labeler majority on 19 and sides with Neon on the request tag (`R3` instead of `R1`) of DOC-062 and DOC-071. Its guidance told it to weigh R1 against R3 on exactly this kind of document, so that is not independent confirmation. Those 25 labels are still synthetic model output, not attorney review.
 
+### Full reports
+
+| File | What it shows |
+|---|---|
+| [eval/REPORT_argon.md](eval/REPORT_argon.md), [eval/REPORT_carbon.md](eval/REPORT_carbon.md) | System and baseline against each labeler: precision, recall, head to head, and which documents went wrong |
+| [eval/THRESHOLDS_argon.md](eval/THRESHOLDS_argon.md), [eval/THRESHOLDS_carbon.md](eval/THRESHOLDS_carbon.md) | Every threshold from 0.5 to 0.99: how many documents were decided, how many wrong, with and without the quote check |
+| [eval/CALIBRATION_argon.md](eval/CALIBRATION_argon.md), [eval/CALIBRATION_carbon.md](eval/CALIBRATION_carbon.md) | Agreement by confidence band |
+| [eval/AGREEMENT.md](eval/AGREEMENT.md) | The three labelers against each other, the nine documents they split on, the majority label, and the synthetic check |
+| [eval/threshold_curve_argon.png](eval/threshold_curve_argon.png), [eval/threshold_curve_carbon.png](eval/threshold_curve_carbon.png) | The threshold chart |
+
+Every report opens by saying whose labels it uses. All labels are model-made.
+
 ## What we changed after seeing failures
 
 Against Argon's and Carbon's labels no wrong call got through at 0.9. The failure we saw first was cost: more than half the documents went to a human, most of them needlessly. So we lowered the threshold, by the rule fixed in advance in `src/sweep.py`:
