@@ -2,6 +2,10 @@
 
 First-pass legal document review of scanned pages. It says when it is not sure. Built at the Gemini 4 NYC Hackathon (Nov 21, 2026), Problem Statement One. Everything in this repository was written that day; it contains no earlier code.
 
+| ![Auto-decided review with a verified quote](assets/hero_auto.png) | ![Low-confidence review routed to a human](assets/hero_human.png) |
+|---|---|
+| **Decided automatically:** confidence clears the 0.9 threshold and the supporting quote is verified verbatim on the page. | **Sent to a human:** privilege confidence (0.87) falls below the 0.9 threshold, so the page is routed for human review with the reason. |
+
 ## The problem
 
 In litigation, lawyers code thousands of documents. For each one they decide whether it is responsive to a document request, which request, and whether it is privileged. Models do this fast, but a wrong privilege call that nobody looks at can waive privilege. A reviewer needs to know which calls can be trusted without checking and which cannot.
@@ -114,6 +118,13 @@ Limits of the test itself:
 - The Enron corpus is public and widely used, so the models may have seen these emails in training.
 - The labeler, like the baseline, is one model reading the page. That may favor the baseline.
 - The quote check proves the quote is on the page as transcribed. It does not prove the quote supports the call, and it cannot catch a transcription error that the quote repeats.
+
+## Provenance
+
+- **Built on hackathon day:** everything in this repository was written on Nov 21, 2026 at the Gemini 4 NYC Hackathon (Problem Statement One), from the first commit to the final commit in `git log`.
+- **Public data only:** source emails come from `corbt/enron-emails` on Hugging Face; synthetic scan rendering and degradation are in `src/scan.py`.
+- **Pre-committed predictions:** `eval/results.jsonl` and `src/sweep.py` were committed before any label file existed (checkable via `git log --reverse`).
+- **Disclosed model labels:** every label file (`eval/labels_argon.json`, `eval/labels_carbon.json`, `eval/labels_neon.json`) is a Gemini 4 model output, never presented as human attorney review.
 
 ## Run it
 
