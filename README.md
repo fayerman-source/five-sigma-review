@@ -12,6 +12,7 @@ First-pass legal document review of scanned pages. It says when it is not sure. 
 
 - **Agreement with the labels on all 76:** single-call baseline 64 (84%), Five Sigma 71 (93%), against Argon's model labels. Against a second labeler it is 68 and 71; against a third the baseline is ahead, 69 and 66.
 - **Decided alone at threshold 0.9:** 35 of 76. No model labeler disputes the responsiveness or privilege call on any of the 35. One labeler disputes the request tag on two of them.
+- **Privilege precision, on Argon's model labels:** baseline 43%, Five Sigma 71%. The baseline over-calls privilege (8 false calls against 2); it also catches one more of the seven privileged documents (6 against 5).
 - **Every disagreement with Argon's labels went to a human:** five documents, all below the threshold.
 
 ## The problem
@@ -51,8 +52,6 @@ Of the 76 documents, 40 were found by keyword searches for terms that match the 
 
 ## Results
 
-**The labels are models', not an attorney's.** Two models first labeled all 76 scans independently: Gemini 4 Argon through the API (`src/model_label.py`) and Gemini 4 Carbon through the labeling page. Each saw only the scan and the review instructions. They agree on 72 of 76. The four differences are all privilege calls (DOC-040, DOC-051, DOC-055, DOC-072). A third model labeler (Gemini 4 Neon) was added below.
-
 The table uses Argon's labels, so "right" means "agrees with Argon". Carbon's labels are scored in `eval/REPORT_carbon.md` and compared below.
 
 Threshold 0.9, fixed before any label existed:
@@ -64,12 +63,14 @@ Threshold 0.9, fixed before any label existed:
 | Keyword-picked | 40 | 29/40 (72%) | 37/40 (92%) | 14/14 (100%) | 14/40 (35%) | 0 |
 | Distinct emails only | 61 | 53/61 (87%) | 58/61 (95%) | 30/30 (100%) | 30/61 (49%) | 0 |
 
+**The labels are models', not an attorney's.** Two models first labeled all 76 scans independently: Gemini 4 Argon through the API (`src/model_label.py`) and Gemini 4 Carbon through the labeling page. Each saw only the scan and the review instructions. They agree on 72 of 76. The four differences are all privilege calls (DOC-040, DOC-051, DOC-055, DOC-072). A third model labeler (Gemini 4 Neon) was added below.
+
 95% intervals on all documents: baseline 74% to 91%, Five Sigma on everything 86% to 97%, Five Sigma on what it decided alone 90% to 100%. The sample is small, so read a difference of a few documents as noise.
 
 What the numbers say:
 
 - **No document it decided alone has a responsiveness or privilege call that any labeler disputes.** The system decided 35 documents on its own. Argon, Carbon and the three-labeler majority match it on all 35. Neon matches its responsiveness and privilege calls on all 35 but gives a different request tag on two: DOC-062 and DOC-071, two copies of one email about collecting files for the LJM litigation. The system tagged them R1 (LJM) and Neon tagged them R3 (document handling). The system disagreed with Argon on five documents and sent all five to a human.
-- **There is no reliable edge over the baseline in overall agreement.** On the 61 distinct emails the system matches Argon on 58 and the baseline on 53. Against Carbon it is 56 against 55. Against Neon the baseline is ahead, 56 against 53. What the system adds is the routing in the first point, not a higher score.
+- **Its edge is routing, not raw agreement.** On the 61 distinct emails the system matches Argon on 58 and the baseline on 53. Against Carbon it is 56 against 55. Against Neon the baseline is ahead, 56 against 53. What the system adds is the routing in the first point, not a higher score.
 - **The price is review.** It sent 41 documents to a human, and it had 36 of those right anyway.
 - **The baseline over-calls privilege.** Of its 12 disagreements, 8 are documents it called privileged and the labels did not. Privilege precision: baseline 43%, Five Sigma 71%.
 - **On random documents the system is no better than the baseline** (34 of 36 against 35 of 36). The gain is on keyword-picked documents (37 of 40 against 29 of 40), where the privileged-looking documents are.
