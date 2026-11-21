@@ -136,38 +136,53 @@ def main():
         ag_c = sum(1 for d in sdocs if norm_call(L25[d]) == norm_call(LABELS["carbon"][d]))
         ag_n = sum(1 for d in sdocs if norm_call(L25[d]) == norm_call(LABELS["neon"][d]))
         ag_m = sum(1 for d in sdocs if norm_call(L25[d]) == maj[d])
-        s_sys = s_base = s_auto = s_auto_ok = s_wrong_auto = 0
+        s_sys = s_base = s_auto = s_auto_ok = 0
+        auto_diffs = []
         diff25 = []
         for d in sdocs:
             g = norm_call(L25[d])
             y, b = RESULTS[d]["system"], RESULTS[d]["baseline"]
-            oy, ob = norm_call(y) == g, norm_call(b) == g
+            yc = norm_call(y)
+            oy, ob = yc == g, norm_call(b) == g
             s_sys += oy
             s_base += ob
             is_auto = y["decision"] == "auto"
             if is_auto:
                 s_auto += 1
                 s_auto_ok += oy
-                s_wrong_auto += not oy
+                if not oy:
+                    auto_diffs.append((d, yc, g))
             if g != maj[d] or (is_auto and not oy):
                 reason = (N25.get(d, {}).get("reason") or "").replace("|", "/")
-                diff25.append((d, g, maj[d], norm_call(y), y["decision"], reason))
+                diff25.append((d, g, maj[d], yc, y["decision"], reason))
+        if not auto_diffs:
+            auto_diff_desc = "0 automatic decisions differ from synthetic25"
+        elif all(yc[0] == g[0] and yc[2] == g[2] and yc[1] != g[1] for _, yc, g in auto_diffs):
+            tags = {(g[1], yc[1]) for _, yc, g in auto_diffs}
+            tag_note = f" ({next(iter(tags))[0]} instead of {next(iter(tags))[1]})" if len(tags) == 1 else ""
+            auto_diff_desc = (f"{len(auto_diffs)} automatic decisions where the synthetic check gives a different request tag"
+                              f"{tag_note}; responsiveness and privilege match")
+        else:
+            auto_diff_desc = f"{len(auto_diffs)} automatic decisions differ from synthetic25"
         lines += [
             "",
             f"## (e) Synthetic second-look check on {sn} contested-and-control scans (NOT attorney labels)",
             "",
-            "**Disclosure: `eval/labels_synthetic25.json` was produced by a Gemini 4 model (`gemini-4-carbon`) given extra scrutiny guidance on privilege boundaries and LJM litigation holds, NOT by a human attorney.** "
-            "The 25 document IDs come from `eval/attorney_check_docs.json` (contested, disagreement, and control scans).",
+            "**Disclosure: `eval/labels_synthetic25.json` was produced by a Gemini 4 model (`gemini-4-carbon`) given the extra guidance in `data/privilege_guidance.md` (`--docs eval/attorney_check_docs.json --guidance data/privilege_guidance.md`), NOT by a human attorney.** "
+            "The 25 document IDs come from `eval/attorney_check_docs.json` (contested, disagreement, and control scans). "
+            "Note on guidance scope: in addition to two privilege rules, item 3 of `data/privilege_guidance.md` instructed the model on LJM/partnership litigation holds and document-collection instructions to weigh whether the page primarily concerns `R1` (the partnership) or `R3` (document retention, preservation, or collection instructions). "
+            "That instruction matters when reading the automatic-decision comparison below, because the two automatic decisions where `synthetic25` differs from Five Sigma (`DOC-062` and `DOC-071`, two copies of one LJM document-collection email) differ on that exact request tag (`R3` instead of `R1`), while responsiveness and privilege match.",
             "",
-            "| Comparison on the 25 scans | Match count |",
+            "| Comparison on the 25 scans | Agreement |",
             "|---|---|",
-            f"| synthetic25 vs Argon | {frac(ag_a, sn)} |",
-            f"| synthetic25 vs Carbon | {frac(ag_c, sn)} |",
-            f"| synthetic25 vs Neon | {frac(ag_n, sn)} |",
-            f"| synthetic25 vs 3-model majority | {frac(ag_m, sn)} |",
-            f"| Single-call baseline vs synthetic25 | {frac(s_base, sn)} |",
-            f"| Five Sigma (all 25) vs synthetic25 | {frac(s_sys, sn)} |",
-            f"| Five Sigma (auto-decided) vs synthetic25 | {frac(s_auto_ok, s_auto)} ({s_wrong_auto} wrong auto-decisions) |",
+            f"| synthetic25 matches Argon | {frac(ag_a, sn)} |",
+            f"| synthetic25 matches Carbon | {frac(ag_c, sn)} |",
+            f"| synthetic25 matches Neon | {frac(ag_n, sn)} |",
+            f"| synthetic25 matches 3-model majority | {frac(ag_m, sn)} |",
+            f"| Single-call baseline matches synthetic25 (all three calls) | {frac(s_base, sn)} |",
+            f"| Five Sigma (all 25) matches synthetic25 (all three calls) | {frac(s_sys, sn)} |",
+            f"| Five Sigma automatic decisions matching synthetic25 (all three calls) | {frac(s_auto_ok, s_auto)} |",
+            f"| Five Sigma automatic decisions differing from synthetic25 | {auto_diff_desc} |",
             "",
         ]
         if diff25:

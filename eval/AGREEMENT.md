@@ -39,17 +39,18 @@ Duplicate handling reuses `src/score.py` (first copy kept per normalised body te
 
 ## (e) Synthetic second-look check on 25 contested-and-control scans (NOT attorney labels)
 
-**Disclosure: `eval/labels_synthetic25.json` was produced by a Gemini 4 model (`gemini-4-carbon`) given extra scrutiny guidance on privilege boundaries and LJM litigation holds, NOT by a human attorney.** The 25 document IDs come from `eval/attorney_check_docs.json` (contested, disagreement, and control scans).
+**Disclosure: `eval/labels_synthetic25.json` was produced by a Gemini 4 model (`gemini-4-carbon`) given the extra guidance in `data/privilege_guidance.md` (`--docs eval/attorney_check_docs.json --guidance data/privilege_guidance.md`), NOT by a human attorney.** The 25 document IDs come from `eval/attorney_check_docs.json` (contested, disagreement, and control scans). Note on guidance scope: in addition to two privilege rules, item 3 of `data/privilege_guidance.md` instructed the model on LJM/partnership litigation holds and document-collection instructions to weigh whether the page primarily concerns `R1` (the partnership) or `R3` (document retention, preservation, or collection instructions). That instruction matters when reading the automatic-decision comparison below, because the two automatic decisions where `synthetic25` differs from Five Sigma (`DOC-062` and `DOC-071`, two copies of one LJM document-collection email) differ on that exact request tag (`R3` instead of `R1`), while responsiveness and privilege match.
 
-| Comparison on the 25 scans | Match count |
+| Comparison on the 25 scans | Agreement |
 |---|---|
-| synthetic25 vs Argon | 21/25 (84%) |
-| synthetic25 vs Carbon | 19/25 (76%) |
-| synthetic25 vs Neon | 20/25 (80%) |
-| synthetic25 vs 3-model majority | 19/25 (76%) |
-| Single-call baseline vs synthetic25 | 17/25 (68%) |
-| Five Sigma (all 25) vs synthetic25 | 16/25 (64%) |
-| Five Sigma (auto-decided) vs synthetic25 | 6/8 (75%) (2 wrong auto-decisions) |
+| synthetic25 matches Argon | 21/25 (84%) |
+| synthetic25 matches Carbon | 19/25 (76%) |
+| synthetic25 matches Neon | 20/25 (80%) |
+| synthetic25 matches 3-model majority | 19/25 (76%) |
+| Single-call baseline matches synthetic25 (all three calls) | 17/25 (68%) |
+| Five Sigma (all 25) matches synthetic25 (all three calls) | 16/25 (64%) |
+| Five Sigma automatic decisions matching synthetic25 (all three calls) | 6/8 (75%) |
+| Five Sigma automatic decisions differing from synthetic25 | 2 automatic decisions where the synthetic check gives a different request tag (R3 instead of R1); responsiveness and privilege match |
 
 Documents where `synthetic25` differs from the 3-model majority or from a Five Sigma auto-decision:
 
