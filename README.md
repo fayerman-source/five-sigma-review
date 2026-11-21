@@ -63,23 +63,30 @@ Threshold 0.9, fixed before any label existed:
 | Keyword-picked | 40 | 29/40 (72%) | 37/40 (92%) | 14/14 (100%) | 14/40 (35%) | 0 |
 | Distinct emails only | 61 | 53/61 (87%) | 58/61 (95%) | 30/30 (100%) | 30/61 (49%) | 0 |
 
-**The labels are models', not an attorney's.** Two models first labeled all 76 scans independently: Gemini 4 Argon through the API (`src/model_label.py`) and Gemini 4 Carbon through the labeling page. Each saw only the scan and the review instructions. They agree on 72 of 76. The four differences are all privilege calls (DOC-040, DOC-051, DOC-055, DOC-072). A third model labeler (Gemini 4 Neon) was added below.
+**The labels are models', not an attorney's.** Two models first labeled all 76 scans independently: Gemini 4 Argon through the API (`src/model_label.py`) and Gemini 4 Carbon through the labeling page. Each saw only the scan and the review instructions. They agree on 72 of 76. The four differences are all privilege calls (DOC-040, DOC-051, DOC-055, DOC-072). A third model labeler, Gemini 4 Neon, was added later; see below.
 
-95% intervals on all documents: baseline 74% to 91%, Five Sigma on everything 86% to 97%, Five Sigma on what it decided alone 90% to 100%. The sample is small, so read a difference of a few documents as noise.
+95% intervals on all documents: baseline 74% to 91%, Five Sigma on everything 86% to 97%, Five Sigma on what it decided alone 90% to 100%. The sample is small, so a difference of a few documents could be chance.
 
 What the numbers say:
 
 - **No document it decided alone has a responsiveness or privilege call that any labeler disputes.** The system decided 35 documents on its own. Argon, Carbon and the three-labeler majority match it on all 35. Neon matches its responsiveness and privilege calls on all 35 but gives a different request tag on two: DOC-062 and DOC-071, two copies of one email about collecting files for the LJM litigation. The system tagged them R1 (LJM) and Neon tagged them R3 (document handling). The system disagreed with Argon on five documents and sent all five to a human.
-- **Its edge is routing, not raw agreement.** On the 61 distinct emails the system matches Argon on 58 and the baseline on 53. Against Carbon it is 56 against 55. Against Neon the baseline is ahead, 56 against 53. What the system adds is the routing in the first point, not a higher score.
+- **Its edge is routing, not raw agreement.** On the 61 distinct emails the system matches Argon on 58 and the baseline on 53. Against Carbon it is 56 against 55. Against Neon the baseline is ahead, 56 against 53.
 - **The price is review.** It sent 41 documents to a human, and it had 36 of those right anyway.
 - **The baseline over-calls privilege.** Of its 12 disagreements, 8 are documents it called privileged and the labels did not. Privilege precision: baseline 43%, Five Sigma 71%.
 - **On random documents the system is no better than the baseline** (34 of 36 against 35 of 36). The gain is on keyword-picked documents (37 of 40 against 29 of 40), where the privileged-looking documents are.
 
 Full detail is in `eval/REPORT_argon.md`.
 
-A third model labeler, Gemini 4 Neon (`eval/labels_neon.json`), was added later under the same scan-only prompt (`eval/AGREEMENT.md`). Pairwise agreement on all three calls across the 76 scans is 72/76 (95%) for Argon vs Carbon, 71/76 (93%) for Carbon vs Neon, and 67/76 (88%) for Argon vs Neon, with all three unanimous on 67/76. Neon is also the model that finds supporting quotes inside Stage 3 of the system, so it is less independent than Argon and Carbon.
+A third model labeler, Gemini 4 Neon (`eval/labels_neon.json`), was added later under the same scan-only prompt (`eval/AGREEMENT.md`). Agreement on all three calls across the 76 scans:
 
-We also ran a synthetic second-look model check on 25 contested, disagreement, and control scans (`eval/labels_synthetic25.json`, guidance in `data/privilege_guidance.md`, reported in `eval/AGREEMENT.md`); on the 25 documents it matches the three-labeler majority on 19 and sides with Neon on the request tag (`R3` instead of `R1`) of DOC-062 and DOC-071. Its guidance told it to weigh R1 against R3 on exactly this kind of document, so that is not independent confirmation. Those 25 labels are still synthetic model output, not attorney review.
+- Argon and Carbon: 72/76 (95%)
+- Carbon and Neon: 71/76 (93%)
+- Argon and Neon: 67/76 (88%)
+- All three unanimous: 67/76
+
+Neon is also the model that finds supporting quotes inside Stage 3 of the system, so it is less independent than Argon and Carbon.
+
+We also ran a synthetic second-look check: one model, given extra guidance (`data/privilege_guidance.md`), relabeled 25 scans. The 25 are the 15 where the system or the baseline disagreed with Argon's labels, plus 10 random controls (`eval/labels_synthetic25.json`, reported in `eval/AGREEMENT.md`). It matches the three-labeler majority on 19 of the 25 and sides with Neon on the request tag (`R3` instead of `R1`) of DOC-062 and DOC-071. Its guidance told it to weigh R1 against R3 on exactly this kind of document, so that is not independent confirmation. Those 25 labels are still synthetic model output, not attorney review.
 
 ### Full reports
 
@@ -134,12 +141,12 @@ The same breakdown for each probability on its own is in `eval/CALIBRATION_argon
 - **One responsiveness miss.** DOC-058 is an automated transmission notice that the labeler tied to the California market and the system did not.
 - **A request tag got through unreviewed, and the gate does not cover it.** DOC-062 and DOC-071 (one email, two copies) were decided automatically as R1. Neon calls them R3; Argon and Carbon agree with R1. Nobody disputes that they are responsive and not privileged. But the confidence that gates automatic decisions covers only the responsive and privileged probabilities, not which request. The Decisions API gave R1 a probability of 0.67 and 0.79 on these two. In a replay, also requiring the request probability to be at least 0.8 sends both to a human and leaves 33 automatic decisions at 0.9 (43 at 0.8) with no disagreement against any labeler. We found this after the third labeler was added. The cut-off of 0.8 was chosen on these same documents and the change is not in the shipped pipeline, so treat it as the next change, not a result.
 - **It decides less than half the documents alone at 0.9** (35 of 76), and 61% at 0.8 (46 of 76).
-- **The labels are models'.** Argon and Carbon disagree with each other on four privilege calls (as many as the system's own privilege disagreements), and across all three labelers 9 of 76 documents split. Argon marked 19 of the 76 as documents a careful reviewer could disagree on. The system sent 16 of those 19 to a human, which suggests its doubt lands in the right places, but no attorney has checked the labels.
+- **The labels are models'.** Argon and Carbon disagree with each other on four privilege calls (as many as the system's own privilege disagreements), and across all three labelers 9 of 76 documents split. Argon marked 19 of the 76 as documents a careful reviewer could disagree on. The system sent 16 of those 19 to a human, which suggests it is unsure about the right documents, but no attorney has checked the labels.
 
 Limits of the test itself:
 
 - The scans are synthetic. Real paper scans and real handwriting will be harder.
-- The sample is small: 61 distinct emails. Differences of a few documents are noise.
+- The sample is small: 61 distinct emails. Differences of a few documents could be chance.
 - Each document is one page, and all are short emails (250 to 2,200 characters).
 - The Enron corpus is public and widely used, so the models may have seen these emails in training.
 - The labeler, like the baseline, is one model reading the page. That may favor the baseline.
