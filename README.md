@@ -68,7 +68,7 @@ Full detail is in `eval/REPORT_argon.md`.
 
 A third model labeler, Gemini 4 Neon (`eval/labels_neon.json`), was added later under the same scan-only prompt (`eval/AGREEMENT.md`). Pairwise agreement on all three calls across the 76 scans is 72/76 (95%) for Argon vs Carbon, 71/76 (93%) for Carbon vs Neon, and 67/76 (88%) for Argon vs Neon, with all three unanimous on 67/76. Neon is also the model that finds supporting quotes inside Stage 3 of the system, so it is less independent than Argon and Carbon.
 
-We also ran a synthetic second-look model check on 25 contested, disagreement, and control scans (`eval/labels_synthetic25.json`, guidance in `data/privilege_guidance.md`, reported in `eval/AGREEMENT.md`); on the 25 documents it matches the three-labeler majority on 19 and sides with Neon on the request tag (`R3` instead of `R1`) of DOC-062 and DOC-071. Those 25 labels are still synthetic model output, not attorney review.
+We also ran a synthetic second-look model check on 25 contested, disagreement, and control scans (`eval/labels_synthetic25.json`, guidance in `data/privilege_guidance.md`, reported in `eval/AGREEMENT.md`); on the 25 documents it matches the three-labeler majority on 19 and sides with Neon on the request tag (`R3` instead of `R1`) of DOC-062 and DOC-071. Its guidance told it to weigh R1 against R3 on exactly this kind of document, so that is not independent confirmation. Those 25 labels are still synthetic model output, not attorney review.
 
 ## What we changed after seeing failures
 
