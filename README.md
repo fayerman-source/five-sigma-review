@@ -27,6 +27,7 @@ A document is decided automatically only if confidence is at or above a threshol
 - **Requests:** three mock document requests and a privilege rule, in `data/requests.md`.
 - **Labels:** an attorney coded the scans in a labeling page that shows only the scan, before seeing any model output.
 - **Order of events, checkable in the git history:** model outputs for all 76 documents (`eval/results.jsonl`) were committed before the first label was saved. The scorer and the rule for picking a new threshold were also committed before the first label. The threshold in that run was 0.9.
+- **Two runs, one scored:** the first run (12:15) turned out to have used a personal API key instead of the hackathon one. We ran everything again on the hackathon key and committed that at 12:50, still before any label existed and without scoring or comparing the first run. Only the second run is scored. The first is in the git history.
 
 ### How the test set was chosen: a known limitation
 
