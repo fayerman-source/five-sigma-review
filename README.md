@@ -1,23 +1,23 @@
 # Five Sigma Review
 
-First-pass legal document review on scanned pages that says when it is not sure. Built at the Gemini 4 NYC Hackathon (Nov 21, 2026), Problem Statement One.
+First-pass legal document review of scanned pages. It says when it is not sure. Built at the Gemini 4 NYC Hackathon (Nov 21, 2026), Problem Statement One.
 
 ## The problem
 
-In litigation, lawyers code thousands of documents: is it responsive to a document request, which request, is it privileged. Models do this fast, but a wrong privilege call that nobody looks at can waive privilege. A reviewer needs to know which calls can be trusted without checking and which cannot.
+In litigation, lawyers code thousands of documents. For each one they decide whether it is responsive to a document request, which request, and whether it is privileged. Models do this fast, but a wrong privilege call that nobody looks at can waive privilege. A reviewer needs to know which calls can be trusted without checking and which cannot.
 
 ## What it does
 
-One scanned page in (photo, scan or PDF). Three Gemini 4 models, each with one job, then a code check:
+The input is one scanned page: a photo, a scan or a PDF. Three Gemini 4 models each do one job, and then code checks their work:
 
 | Stage | Model | Job |
 |---|---|---|
 | 1. Read | `gemini-4-hydrogen` | Transcribe the page exactly, including stamps and handwriting |
-| 2. Decide | Decisions API, `gemini-decision-1` | Probabilities for responsive, which request, privileged, from the image and the transcription |
-| 3. Evidence | `gemini-4-neon` | For each positive call, the exact passage that supports it |
+| 2. Decide | Decisions API, `gemini-decision-1` | A probability for each call (responsive, which request, privileged), based on the image and the transcription |
+| 3. Evidence | `gemini-4-neon` | For each positive call, the exact quote that supports it |
 | 4. Check | plain code | Every quote must appear verbatim in the transcription |
 
-A document is decided automatically only if confidence is at or above a threshold **and** every quote checks out. Anything else goes to a human with the reason. The system fails closed.
+A document is decided automatically only if confidence is at or above a threshold **and** every quote is verified. Anything else goes to a human with the reason. The system fails closed.
 
 **Baseline:** one `gemini-4-hydrogen` call on the same image that answers all three questions at once.
 
@@ -25,30 +25,34 @@ A document is decided automatically only if confidence is at or above a threshol
 
 - **Documents:** 76 public Enron emails (Hugging Face `corbt/enron-emails`), each rendered as a page and degraded by `src/scan.py` (skew, blur, noise, fax header, Bates stamp, margin note in a handwriting font, perspective).
 - **Requests:** three mock document requests and a privilege rule, in `data/requests.md`.
-- **Labels:** an attorney coded the scans in a labeling page that shows only the scan, before seeing any model output.
+- **Labels:** made in a labeling page that shows only the scan, before the labeler sees any model output. The Results section says who made them.
 - **Order of events, checkable in the git history:** model outputs for all 76 documents (`eval/results.jsonl`) were committed before the first label was saved. The scorer and the rule for picking a new threshold were also committed before the first label. The threshold in that run was 0.9.
-- **Two runs, one scored:** the first run (12:15) turned out to have used a personal API key instead of the hackathon one. We ran everything again on the hackathon key and committed that at 12:50, still before any label existed and without scoring or comparing the first run. Only the second run is scored. The first is in the git history.
+- **Two runs, one scored:** the first run (12:15) used a personal API key instead of the hackathon one. We ran everything again on the hackathon key and committed that run at 12:50. No label existed yet, and we never scored the first run or compared it with the second. Only the second run is scored. The first is in the git history.
 
 ### How the test set was chosen: a known limitation
 
-40 of the 76 documents were found by keyword searches for terms that match the requests (for example "LJM", "Raptor", "document retention"). 36 came from random positions in the corpus. Keyword-picked documents are easier for any model, because the search term is usually what makes them responsive. So results are reported three ways: all documents, random only, keyword-picked only. The random group is the fairer estimate.
+Of the 76 documents, 40 were found by keyword searches for terms that match the requests (for example `LJM`, `Raptor` and `document retention`). The other 36 came from random positions in the corpus. Keyword-picked documents are easier for any model, because the search term is usually what makes them responsive. So results are reported three ways: all documents, random only, and keyword-picked only. The random group is the fairer estimate.
 
 ## Results
 
-Pending: the attorney is still labeling. This section will hold the table from `eval/REPORT.md`.
+Pending: labeling is not finished. This section will hold the table from `eval/REPORT.md` and will say who made the labels.
 
 ## What we changed after seeing failures
 
-Pending. The plan, fixed in advance in `src/sweep.py`: replay the stored outputs at other thresholds, pick the lowest threshold with no wrong auto-decision on DOC-001 to DOC-050, then report that threshold on DOC-051 onward, which the choice never saw.
+Pending. The plan was fixed in advance in `src/sweep.py`:
+
+1. Replay the stored outputs at other thresholds.
+2. Pick the lowest threshold with no wrong auto-decision on DOC-001 to DOC-050.
+3. Report that threshold on DOC-051 onward. Those documents play no part in the choice.
 
 ## Where it still fails
 
-Pending the scored failures. Limits already known:
+Pending the scored failures. These limits are already known:
 
 - The scans are synthetic. Real paper scans and real handwriting will be harder.
-- One labeler. No second attorney, so no agreement rate.
-- Small sample. Differences of a few documents are noise.
-- One page per document, short emails only (250 to 2,200 characters).
+- There is one labeler, so there is no agreement rate.
+- The sample is small. Differences of a few documents are noise.
+- Each document is one page, and all are short emails (250 to 2,200 characters).
 - The Enron corpus is public and widely used, so the models may have seen these emails in training.
 - The quote check proves the quote is on the page as transcribed. It does not prove the quote supports the call, and it cannot catch a transcription error that the quote repeats.
 
@@ -64,7 +68,7 @@ python3 src/score.py                      # -> eval/REPORT.md
 python3 src/sweep.py                      # -> eval/THRESHOLDS.md, eval/threshold_curve.png
 ```
 
-The live demo differs from the scored run in three ways, none of which touch the evaluation:
+The live demo differs from the scored run in three ways. None of them affects the evaluation:
 
 - It normalizes uploads first (rotates phone photos upright and shrinks them to 2,200 pixels on the long side).
 - Its three sample scans (`data/samples/`) are public Enron emails that are not among the 76 test documents.
