@@ -6,7 +6,7 @@ how many documents are decided without a human and how many of those are right.
 To avoid tuning on the test set, the threshold is PICKED on DOC-001..050 and then REPORTED on
 DOC-051..076, which the choice never saw. Writes eval/THRESHOLDS.md and eval/threshold_curve.png.
 Usage: python3 src/sweep.py [--pick 0.95]   (default: pick_threshold() below)"""
-import json, os, sys
+import json, os, re, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LABELS_FILE = os.environ.get("LABELS_FILE", "labels.json")
@@ -21,6 +21,8 @@ R = {d: r["system"] for d, r in ROWS.items() if usable(r)}
 GROUP = {json.loads(l)["doc_id"]: ("keyword" if json.loads(l)["source"].startswith("search:") else "random")
          for l in (ROOT / "data" / "emails.jsonl").open()}
 DOCS = sorted(d for d in L if d in R)
+_E = [json.loads(l) for l in (ROOT / "data" / "emails.jsonl").open()]
+TEXT = {e["doc_id"]: re.sub(r"\W+", " ", e["body"].lower()).strip()[:400] for e in _E}  # to spot the same email stored twice
 THRESHOLDS = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.97, 0.99]
 PREREGISTERED = 0.9
 TUNE_MAX = 50  # DOC-001..050 pick the threshold; DOC-051.. confirm it
@@ -122,7 +124,13 @@ def main():
         lines += ["", f"No documents after DOC-{TUNE_MAX:03d} are labeled yet, so the picked threshold is NOT confirmed on unseen documents."]
     lines += ["", f"![Threshold curve](threshold_curve{TAG}.png)", ""]
     lines += table("Tuning documents", tune, mark=(picked,))
-    if confirm: lines += table("Confirmation documents (never used to pick)", confirm, mark=(picked,))
+    if confirm:
+        lines += table("Confirmation documents (never used to pick)", confirm, mark=(picked,))
+        tuned = {TEXT[d] for d in tune}
+        fresh = [d for d in confirm if TEXT[d] not in tuned]
+        lines += [f"{len(confirm) - len(fresh)} of the {len(confirm)} confirmation documents repeat the text of a tuning document (the corpus stores the "
+                  "same email in several mailboxes), so they are not a clean test of the choice. The next table drops them.", ""]
+        lines += table("Confirmation documents that do not repeat a tuning document", fresh, mark=(picked,))
     lines += table("All labeled, random documents only", [d for d in DOCS if GROUP[d] == "random"], mark=(picked,))
     lines += table("All labeled, keyword-picked documents only", [d for d in DOCS if GROUP[d] == "keyword"], mark=(picked,))
     (ROOT / "eval" / f"THRESHOLDS{TAG}.md").write_text("\n".join(lines))

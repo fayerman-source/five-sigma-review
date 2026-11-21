@@ -45,6 +45,22 @@ To avoid tuning on the test set, the threshold was picked on DOC-001..050 only, 
 | 0.97 | 4/26 (15%) | 4/4 (100%) | 0  | 4/26 (15%) decided, 0 wrong |
 | 0.99 | 0/26 (0%) | 0/0 | 0  | 0/26 (0%) decided, 0 wrong |
 
+6 of the 26 confirmation documents repeat the text of a tuning document (the corpus stores the same email in several mailboxes), so they are not a clean test of the choice. The next table drops them.
+
+### Confirmation documents that do not repeat a tuning document (n = 20)
+
+| Threshold | Decided without a human | Auto-decided and right | Wrong but auto-decided | Same, without the quote check |
+|---|---|---|---|---|
+| 0.5 | 20/20 (100%) | 18/20 (90%) | 2 ['DOC-058', 'DOC-072'] | 20/20 (100%) decided, 2 wrong |
+| 0.6 | 17/20 (85%) | 16/17 (94%) | 1 ['DOC-058'] | 17/20 (85%) decided, 1 wrong |
+| 0.7 | 15/20 (75%) | 14/15 (93%) | 1 ['DOC-058'] | 15/20 (75%) decided, 1 wrong |
+| 0.8 (picked) | 12/20 (60%) | 12/12 (100%) | 0  | 12/20 (60%) decided, 0 wrong |
+| 0.85 | 11/20 (55%) | 11/11 (100%) | 0  | 11/20 (55%) decided, 0 wrong |
+| 0.9 (pre-registered) | 9/20 (45%) | 9/9 (100%) | 0  | 9/20 (45%) decided, 0 wrong |
+| 0.95 | 7/20 (35%) | 7/7 (100%) | 0  | 7/20 (35%) decided, 0 wrong |
+| 0.97 | 3/20 (15%) | 3/3 (100%) | 0  | 3/20 (15%) decided, 0 wrong |
+| 0.99 | 0/20 (0%) | 0/0 | 0  | 0/20 (0%) decided, 0 wrong |
+
 ### All labeled, random documents only (n = 36)
 
 | Threshold | Decided without a human | Auto-decided and right | Wrong but auto-decided | Same, without the quote check |
