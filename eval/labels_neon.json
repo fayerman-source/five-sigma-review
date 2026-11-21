@@ -1,0 +1,382 @@
+{
+ "DOC-001": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-002": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": false
+ },
+ "DOC-003": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-004": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": false
+ },
+ "DOC-005": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-006": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": false
+ },
+ "DOC-007": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": true
+ },
+ "DOC-008": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-009": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-010": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": true
+ },
+ "DOC-011": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-012": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-013": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-014": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-015": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-016": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-017": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": true
+ },
+ "DOC-018": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": true
+ },
+ "DOC-019": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": false
+ },
+ "DOC-020": {
+  "responsive": true,
+  "request": "R3",
+  "privileged": false
+ },
+ "DOC-021": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-022": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-023": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-024": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-025": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-026": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": true
+ },
+ "DOC-027": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-028": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-029": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-030": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": false
+ },
+ "DOC-031": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-032": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-033": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-034": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-035": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-036": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-037": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-038": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-039": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-040": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-041": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-042": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-043": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-044": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-045": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-046": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-047": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-048": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-049": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-050": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-051": {
+  "responsive": true,
+  "request": "R3",
+  "privileged": true
+ },
+ "DOC-052": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-053": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-054": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-055": {
+  "responsive": true,
+  "request": "R3",
+  "privileged": true
+ },
+ "DOC-056": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-057": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-058": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": false
+ },
+ "DOC-059": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-060": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-061": {
+  "responsive": false,
+  "request": "none",
+  "privileged": true
+ },
+ "DOC-062": {
+  "responsive": true,
+  "request": "R3",
+  "privileged": false
+ },
+ "DOC-063": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-064": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-065": {
+  "responsive": true,
+  "request": "R3",
+  "privileged": false
+ },
+ "DOC-066": {
+  "responsive": true,
+  "request": "R2",
+  "privileged": false
+ },
+ "DOC-067": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-068": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-069": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-070": {
+  "responsive": true,
+  "request": "R1",
+  "privileged": false
+ },
+ "DOC-071": {
+  "responsive": true,
+  "request": "R3",
+  "privileged": false
+ },
+ "DOC-072": {
+  "responsive": true,
+  "request": "R3",
+  "privileged": true
+ },
+ "DOC-073": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-074": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-075": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ },
+ "DOC-076": {
+  "responsive": false,
+  "request": "none",
+  "privileged": false
+ }
+}
