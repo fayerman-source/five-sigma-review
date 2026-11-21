@@ -4,7 +4,7 @@ It is given nothing else: not the email text, not how the document was picked, n
 Its labels are a model's opinion, never attorney labels; score them with LABELS_FILE=labels_<name>.json so the
 reports say so. Usage: python3 src/model_label.py <model> <name> [first_doc last_doc]
 Example: python3 src/model_label.py gemini-4-argon argon 1 76   ->  eval/labels_argon.json (+ _notes.json)"""
-import json, sys, concurrent.futures as cf
+import json, os, sys, concurrent.futures as cf
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pipeline as P
@@ -20,11 +20,11 @@ PROMPT = ("You are an attorney doing first-pass document review. Review instruct
           'Return JSON {"responsive": true|false, "request": "R1"|"R2"|"R3"|"none", "privileged": true|false, '
           '"ambiguous": true|false, "reason": "<one sentence>"}. Set ambiguous to true if a careful reviewer could reasonably disagree.')
 
-def label(model, doc):
+def label(model, doc, prompt=PROMPT):
     mime, data = P._img_part(ROOT / "data" / "scans" / f"{doc}.jpg")
     for _ in range(3):
         try:
-            d = json.loads(P._gen(model, [{"inline_data": {"mime_type": mime, "data": data}}, {"text": PROMPT}], json_mode=True, thinking="high"))
+            d = json.loads(P._gen(model, [{"inline_data": {"mime_type": mime, "data": data}}, {"text": prompt}], json_mode=True, thinking="high"))
             resp, priv = d["responsive"], d["privileged"]
             if not isinstance(resp, bool) or not isinstance(priv, bool):
                 raise ValueError(f"non-boolean label: responsive={resp!r}, privileged={priv!r}")
@@ -36,16 +36,51 @@ def label(model, doc):
             err = str(e)[:200]
     return doc, None, {"error": err}
 
+def _repo_file(raw):
+    """Return a resolved file path strictly inside ROOT, or None if not an existing repo file."""
+    root = ROOT.resolve()
+    p = Path(raw)
+    cand = (p if p.is_absolute() else root / p).resolve()
+    if not cand.is_relative_to(root) or not str(cand).startswith(str(root) + os.sep):
+        raise ValueError(f"path outside repository root: {raw}")
+    return cand if cand.is_file() else None
+
+def _build_prompt(guidance):
+    if not guidance:
+        return PROMPT
+    gp = _repo_file(guidance)
+    extra = gp.read_text().strip() if gp is not None else guidance.strip()
+    return PROMPT + "\n\n" + extra
+
+def _load_docs(docs_arg):
+    if not docs_arg:
+        return [json.loads(l)["doc_id"] for l in (ROOT / "data" / "emails.jsonl").open()]  # ids only; no other field is read
+    dp = _repo_file(docs_arg)
+    if dp is None:
+        raise FileNotFoundError(f"docs file not found inside repository: {docs_arg}")
+    return json.loads(dp.read_text())
+
 def main():
-    model, name = sys.argv[1], sys.argv[2]
-    lo, hi = (int(sys.argv[3]), int(sys.argv[4])) if len(sys.argv) > 4 else (1, 10**6)
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("model")
+    ap.add_argument("name")
+    ap.add_argument("bounds", nargs="*", type=int)
+    ap.add_argument("--docs", help="Optional JSON file of doc IDs to label")
+    ap.add_argument("--guidance", help="Optional extra review guidance text or file path")
+    args = ap.parse_args()
+    model, name = args.model, args.name
+    lo, hi = (args.bounds[0], args.bounds[1]) if len(args.bounds) >= 2 else (1, 10**6)
+    prompt = _build_prompt(args.guidance)
     out, notes_path = ROOT / "eval" / f"labels_{name}.json", ROOT / "eval" / f"labels_{name}_notes.json"
     L = json.loads(out.read_text()) if out.exists() else {}
     N = json.loads(notes_path.read_text()) if notes_path.exists() else {}
-    docs = [json.loads(l)["doc_id"] for l in (ROOT / "data" / "emails.jsonl").open()]  # ids only; no other field is read
+    docs = _load_docs(args.docs)
     todo = [d for d in docs if lo <= int(d.split("-")[1]) <= hi and d not in L]
     with cf.ThreadPoolExecutor(6) as ex:
-        for doc, lab, note in ex.map(lambda d: label(model, d), todo):
+        futs = [ex.submit(label, model, d, prompt) for d in todo]
+        for fut in cf.as_completed(futs):
+            doc, lab, note = fut.result()
             if lab: L[doc] = lab
             N[doc] = dict(note, model=model)
             out.write_text(json.dumps(dict(sorted(L.items())), indent=1)); notes_path.write_text(json.dumps(dict(sorted(N.items())), indent=1))

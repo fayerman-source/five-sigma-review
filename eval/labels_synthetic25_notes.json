@@ -1,0 +1,127 @@
+{
+ "DOC-007": {
+  "ambiguous": false,
+  "reason": "The email forwards substantive legal advice from outside counsel at Bracewell & Patterson regarding FERC price caps and sales in the California electricity market (ISO, PX, and CDWR) in 2001.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-008": {
+  "ambiguous": false,
+  "reason": "The email relays Morgan Stanley commentary on Enron credit default swap spreads and ratings reactions following an earnings call, without discussing SPV partnerships, the California electricity market, document handling, or legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-010": {
+  "ambiguous": false,
+  "reason": "Outside counsel at Bracewell & Patterson provides substantive legal analysis and advice to Enron personnel regarding a FERC complaint over CAISO/PX price caps in the 2000 California electricity market.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-016": {
+  "ambiguous": false,
+  "reason": "This is a personal newsletter email regarding purchasing college football tickets on eBay, unrelated to any document request or legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-022": {
+  "ambiguous": false,
+  "reason": "Routine IT user survey regarding migrating email accounts from Lotus Notes to Outlook, with no connection to responsive topics or legal advice despite being sent to legal staff.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-023": {
+  "ambiguous": false,
+  "reason": "Routine transmittal of a draft GISB gas contract from Enron's legal department to an external counterparty, unrelated to R1-R3 and not a confidential privileged communication.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-026": {
+  "ambiguous": false,
+  "reason": "The email chain concerns a review of the Raptor structure (R1), and General Counsel James Derrick's logistical instruction to forward the underlying business email to WC&P does not request or convey substantive legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-027": {
+  "ambiguous": true,
+  "reason": "Unrelated email thread between in-house counsel about IHI/Sempra matters, internal staffing, and call scheduling that carries a privileged subject header without substantive legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-030": {
+  "ambiguous": false,
+  "reason": "Automated 2001 Enron WestDesk log reporting variances in California ISO (CISO) energy import/export wheeling and PGE load schedules, responsive to R2 with no legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-034": {
+  "ambiguous": true,
+  "reason": "In-house Enron counsel Mary Cook analyzes Chewco and JEDI I ownership percentages to assist colleagues in reviewing Raptor matters, making it responsive to R1 and privileged (though somewhat ambiguous given the underlying factual information from a non-lawyer).",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-037": {
+  "ambiguous": true,
+  "reason": "This email chain between in-house counsel concerns unrelated IHI arbitration commercial motives, internal litigation staffing, and scheduling a call after a Sempra deposition rather than any target request, and despite its privileged subject header it contains no substantive legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-040": {
+  "ambiguous": true,
+  "reason": "The email directly concerns Chewco and Raptor investments (R1), and is sent by in-house counsel Mary Cook analyzing entity ownership interests to assist in reviewing Raptor matters, though it closely borders on relaying factual business information.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-041": {
+  "ambiguous": false,
+  "reason": "This is a routine calendar invitation for a weekly market intelligence status meeting with no mention of R1 partnerships, the California electricity market, document retention, or legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-047": {
+  "ambiguous": false,
+  "reason": "The email concerns routine employee performance review logistics unrelated to R1\u2013R3, and neither the administrative discussion between staff nor the handwritten reminder to 'call legal re this' constitutes or reflects a confidential communication requesting or giving legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-048": {
+  "ambiguous": false,
+  "reason": "External email from TXU to ERCOT working groups regarding Texas meter-read data workarounds, unrelated to Enron partnerships, the California market, document retention, or legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-050": {
+  "ambiguous": false,
+  "reason": "The document is a forwarded meeting invitation for an unrelated software demonstration (KnowMadic suite) and contains no legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-051": {
+  "ambiguous": true,
+  "reason": "In-house counsel (EES Legal and Richard Sanders) communicate regarding ENA's document retention policy for post-closing transaction drafts, making it clearly responsive to R3 and privileged as legal policy advice, though arguably borderline administrative.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-055": {
+  "ambiguous": true,
+  "reason": "The email chain directly concerns ENA and EES document retention policies regarding post-closing drafts (R3), and while exchanged between in-house legal personnel, it merely makes a factual inquiry about policy status and refers the sender to a paralegal rather than conveying substantive legal advic",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-057": {
+  "ambiguous": true,
+  "reason": "The email chain concerns an unrelated IHI arbitration, internal legal staffing, and a brief deposition check-in rather than any target request, and despite the privileged subject header between in-house counsel, it discusses commercial motives and job status without substantive legal advice, though ",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-058": {
+  "ambiguous": true,
+  "reason": "Automated April 2001 OASIS transmission status notice sent to Enron trader Mark Guzman showing an hourly power transmission request and pricing out of the California ISO (CISO), with no legal involvement.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-062": {
+  "ambiguous": true,
+  "reason": "The email chain primarily concerns document-collection and preservation instructions\u2014identifying Lotus Notes folders to burn to CDs and compiling hard copies for LJM litigation production (R3)\u2014rather than substantive LJM partnership matters (R1), and it is not privileged because it addresses collect",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-069": {
+  "ambiguous": false,
+  "reason": "This routine email from Enron's legal department to an external counterparty at Progress Energy/CP&L requesting contract exhibit information does not concern any of the responsive topics and involves neither a confidential client communication nor legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-071": {
+  "ambiguous": true,
+  "reason": "The email chain concerns document-collection instructions and logistics (burning Lotus Notes folders to CDs and compiling hard copies) for LJM litigation rather than substantive LJM business or legal advice, though the LJM subject line and 'call legal re this' note create borderline R1 and privilege",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-072": {
+  "ambiguous": true,
+  "reason": "The email chain directly concerns ENA and EES document retention policies regarding transaction drafts (R3), and while exchanged between in-house legal personnel, it involves factual policy inquiries and a referral to a paralegal rather than substantive legal advice.",
+  "model": "gemini-4-carbon"
+ },
+ "DOC-074": {
+  "ambiguous": false,
+  "reason": "The document is an external public mailing list email regarding statistical software (S-Plus) and Weibull distributions, unrelated to partnerships, the California energy market, document retention, or legal advice.",
+  "model": "gemini-4-carbon"
+ }
+}
