@@ -25,7 +25,7 @@ A document is decided automatically only if confidence is at or above a threshol
 
 - **Documents:** 76 public Enron emails (Hugging Face `corbt/enron-emails`), each rendered as a page and degraded by `src/scan.py` (skew, blur, noise, fax header, Bates stamp, margin note in a handwriting font, perspective).
 - **Requests:** three mock document requests and a privilege rule, in `data/requests.md`.
-- **Labels:** made in a labeling page that shows only the scan, before the labeler sees any model output. The Results section says who made them.
+- **Labels:** made by a model labeler that is given only the scan and the review instructions. No attorney has labeled the set yet. See Results.
 - **Order of events, checkable in the git history:** model outputs for all 76 documents (`eval/results.jsonl`) were committed before the first label was saved. The scorer and the rule for picking a new threshold were also committed before the first label. The threshold in that run was 0.9.
 - **Two runs, one scored:** the first run (12:15) used a personal API key instead of the hackathon one. We ran everything again on the hackathon key and committed that run at 12:50. No label existed yet, and we never scored the first run or compared it with the second. Only the second run is scored. The first is in the git history.
 
@@ -35,25 +35,62 @@ Of the 76 documents, 40 were found by keyword searches for terms that match the 
 
 ## Results
 
-Pending: labeling is not finished. This section will hold the table from `eval/REPORT.md` and will say who made the labels.
+**The labels are a model's, not an attorney's.** Gemini 4 Argon labeled all 76 scans. It was given only the scan and the review instructions (`src/model_label.py`). So "right" below means "agrees with Argon". A second model labeler, Gemini 4 Carbon working through the labeling page, has labeled 38 of the scans so far and agrees with Argon on all 38.
+
+Threshold 0.9, fixed before any label existed:
+
+| Documents | n | Single-call baseline right | Five Sigma right (all documents) | Five Sigma right (auto-decided only) | Decided without a human | Wrong but auto-decided |
+|---|---|---|---|---|---|---|
+| All | 76 | 64/76 (84%) | 71/76 (93%) | 35/35 (100%) | 35/76 (46%) | 0 |
+| Random | 36 | 35/36 (97%) | 34/36 (94%) | 21/21 (100%) | 21/36 (58%) | 0 |
+| Keyword-picked | 40 | 29/40 (72%) | 37/40 (92%) | 14/14 (100%) | 14/40 (35%) | 0 |
+
+95% intervals on all documents: baseline 74% to 91%, Five Sigma on everything 86% to 97%, Five Sigma on what it decided alone 90% to 100%. The sample is small, so read a difference of a few documents as noise.
+
+What the numbers say:
+
+- **Nothing wrong got through.** The system decided 35 documents on its own and matched the labels on all 35. It disagreed with the labels on five documents and sent all five to a human.
+- **The price is review.** It sent 41 documents to a human, and it had 36 of those right anyway.
+- **The baseline over-calls privilege.** Of its 12 disagreements, 8 are documents it called privileged and the labels did not. Privilege precision: baseline 43%, Five Sigma 71%.
+- **On random documents the system is no better than the baseline** (34 of 36 against 35 of 36). The gain is on keyword-picked documents (37 of 40 against 29 of 40), where the privileged-looking documents are.
+
+Full detail is in `eval/REPORT_argon.md`.
 
 ## What we changed after seeing failures
 
-Pending. The plan was fixed in advance in `src/sweep.py`:
+No wrong call got through at 0.9. The failure we saw was cost: more than half the documents went to a human, most of them needlessly. So we lowered the threshold, by the rule fixed in advance in `src/sweep.py`:
 
-1. Replay the stored outputs at other thresholds.
-2. Pick the lowest threshold with no wrong auto-decision on DOC-001 to DOC-050.
-3. Report that threshold on DOC-051 onward. Those documents play no part in the choice.
+1. Replay the stored outputs at other thresholds, with no new model calls.
+2. Pick the lowest threshold with no wrong auto-decision on DOC-001 to DOC-050. That threshold is 0.8.
+3. Report 0.8 on DOC-051 onward. Those documents play no part in the choice.
+
+| | Decided without a human | Wrong but auto-decided |
+|---|---|---|
+| DOC-001 to 050, threshold 0.9 | 23/50 (46%) | 0 |
+| DOC-001 to 050, threshold 0.8 | 31/50 (62%) | 0 |
+| DOC-051 to 076, threshold 0.9 | 12/26 (46%) | 0 |
+| DOC-051 to 076, threshold 0.8 | 15/26 (58%) | 0 |
+
+On the 26 documents that the choice never used, 0.8 decides three more documents and still lets nothing wrong through. Below 0.8 wrong calls start to get through: one at 0.7 in each group.
+
+![Threshold curve](eval/threshold_curve_argon.png)
+
+The quote check added little on this set. It sent one document to a human at 0.9. In the replay, dropping the check changes the outcome only at a threshold of 0.5, where it stops one wrong call. Every threshold is in `eval/THRESHOLDS_argon.md`.
 
 ## Where it still fails
 
-Pending the scored failures. These limits are already known:
+- **Privilege is the weak point.** Four of the five disagreements are privilege calls. In two the system missed privilege that the labeler found (DOC-010, DOC-040). In two it called privilege that the labeler did not (DOC-023, DOC-072). Its confidence on all four was between 0.51 and 0.80, so all four went to a human.
+- **One responsiveness miss.** DOC-058 is an automated transmission notice that the labeler tied to the California market and the system did not.
+- **It decides less than half the documents alone at 0.9**, and 62% at 0.8.
+- **The labels are a model's.** Argon marked 19 of the 76 as documents a careful reviewer could disagree on. The system sent 16 of those 19 to a human, which suggests its doubt lands in the right places, but no attorney has checked the labels.
+
+Limits of the test itself:
 
 - The scans are synthetic. Real paper scans and real handwriting will be harder.
-- There is one labeler, so there is no agreement rate.
 - The sample is small. Differences of a few documents are noise.
 - Each document is one page, and all are short emails (250 to 2,200 characters).
 - The Enron corpus is public and widely used, so the models may have seen these emails in training.
+- The labeler, like the baseline, is one model reading the page. That may favor the baseline.
 - The quote check proves the quote is on the page as transcribed. It does not prove the quote supports the call, and it cannot catch a transcription error that the quote repeats.
 
 ## Run it
@@ -63,9 +100,10 @@ pip install -r requirements.txt
 echo "GEMINI_API_KEY=..." > .env          # or .env.hackathon; both are gitignored
 python3 src/app.py                        # live demo: http://127.0.0.1:8801
 python3 src/run_eval.py                   # system and baseline on every scan -> eval/results.jsonl
-python3 src/label_app.py                  # labeling page: http://127.0.0.1:8800 -> eval/labels.json
-python3 src/score.py                      # -> eval/REPORT.md
-python3 src/sweep.py                      # -> eval/THRESHOLDS.md, eval/threshold_curve.png
+python3 src/label_app.py                  # attorney labeling page: http://127.0.0.1:8800 -> eval/labels.json
+python3 src/model_label.py gemini-4-argon argon   # model labeler -> eval/labels_argon.json
+LABELS_FILE=labels_argon.json python3 src/score.py   # -> eval/REPORT_argon.md (without LABELS_FILE: attorney labels -> eval/REPORT.md)
+LABELS_FILE=labels_argon.json python3 src/sweep.py   # -> eval/THRESHOLDS_argon.md, eval/threshold_curve_argon.png
 ```
 
 The live demo differs from the scored run in three ways. None of them affects the evaluation:
