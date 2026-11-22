@@ -5,7 +5,7 @@ First-pass legal document review of scanned pages. It says when it is not sure. 
 **Live demo (during judging, Nov 21, 2026):** https://impact-chain-number-cgi.trycloudflare.com
 This is a temporary link to the demo running on the presenter's laptop. If it is down, watch the video below or see "Run it".
 
-**Demo video (1 minute):** https://youtu.be/JKIFOyBfBH0
+**Demo video (1 minute):** https://youtu.be/DxOfqChEowc
 
 | ![Auto-decided review with a verified quote](assets/hero_auto.png) | ![Low-confidence review routed to a human](assets/hero_human.png) |
 |---|---|
